@@ -17,7 +17,18 @@ Actual features of the final version:
 - dynamic mesh resolution (yet very limited)
 
 ## How to run the application
-The application is created in eclipse. In this repo you find the complete eclipse project with all necessary libraries. So you can just clone the repo and import it into you workspace.
+
+### Linux
+Just execute "run.sh"
+
+### ROTW
+- copy /src/res to /build/res
+
+### Build from console
+javac -d ./build -classpath ./build:./libs/lwjgl_util.jar:./libs/lwjgl_3.0.0a/jar/lwjgl.jar:./libs/PNGDecoder.jar -sourcepath ./src -target 1.8 -g:source,lines,vars -source 1.8 ./src/planetZoooom/*.java
+
+### Start from console
+java -Djava.library.path=./libs/lwjgl_3.0.0a/native -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp ./build:./libs/lwjgl_util.jar:./libs/lwjgl_3.0.0a/jar/lwjgl.jar:./libs/PNGDecoder.jar planetZoooom.Game
 
 HINT: If you have problems starting the application (e.g. under OSX) try the following parameter in Run Configurations -> VM arguments: -XstartOnFirstThread
 
@@ -28,3 +39,4 @@ In addition we want to thank:
 - Stefan Gustavson for his Java implementation of Perlin Noise (http://staffwww.itn.liu.se/~stegu/simplexnoise/SimplexNoise.java)
 - The authors of the "Procedural Content Generation in Games" book (http://pcgbook.com)
 - Last but not least Ondrej Linda for his bachelor thesis "Generation of planetary models by means of fractcal algorithms" (https://dip.felk.cvut.cz/browse/pdfcache/lindao1_2007bach.pdf)
+
