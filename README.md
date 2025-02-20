@@ -28,6 +28,3 @@ In addition we want to thank:
 - Stefan Gustavson for his Java implementation of Perlin Noise (http://staffwww.itn.liu.se/~stegu/simplexnoise/SimplexNoise.java)
 - The authors of the "Procedural Content Generation in Games" book (http://pcgbook.com)
 - Last but not least Ondrej Linda for his bachelor thesis "Generation of planetary models by means of fractcal algorithms" (https://dip.felk.cvut.cz/browse/pdfcache/lindao1_2007bach.pdf)
-
-## Additional information
-http://www.planetzoom.petespixelgarage.de
