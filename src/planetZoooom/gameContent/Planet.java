@@ -7,14 +7,14 @@ import planetZoooom.interfaces.ICameraControl;
 import planetZoooom.utils.CustomNoise;
 import planetZoooom.utils.Info;
 
-public class Planet //implements IGameObjectListener
+public class Planet //implements GameObjectListener
 {
 	private final static float MIN_AMPLITUDE = 1;
 	private final static float MIN_LAMBDA_BASE_FACTOR = 0.1f;
 	private final static int MIN_OCTAVES = 1;
 	private final static int MAX_OCTAVES = 10;
 	private final static float MIN_MOUNTAIN_HEIGHT = 0.0214f;
-	private final static int MIN_TRIANGLES = 10000;
+	private final static int MIN_TRIANGLES = 5000;
 	final static float CAM_COLLISION_OFFSET = 200;
 
 	private DynamicSphere sphere;
@@ -65,7 +65,7 @@ public class Planet //implements IGameObjectListener
 		
 		float camSphereDistance = planetToCam.length() - getRadius();
 		adjustCamSpeed(camSphereDistance);
-		
+
 		handleCollision(planetToCam);
 	}
 	

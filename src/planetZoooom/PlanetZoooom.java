@@ -17,14 +17,14 @@ import planetZoooom.graphics.ShaderProgram;
 import planetZoooom.graphics.Texture;
 import planetZoooom.input.Keyboard;
 import planetZoooom.interfaces.ICameraControl;
-import planetZoooom.interfaces.IGame;
+import planetZoooom.interfaces.Game;
 import planetZoooom.utils.GameUtils;
 import planetZoooom.utils.Info;
 import planetZoooom.utils.MatrixUtils;
 
-public class Game implements IGame 
+public class PlanetZoooom implements Game 
 {
-	private static CoreEngine game;
+	private static CoreEngine coreEngine;
 	private ICameraControl cameraControl;
 	private float fovParam = 45.0f;
 
@@ -74,8 +74,8 @@ public class Game implements IGame
 	
 	public static void main(String[] args) 
 	{
-		game = new CoreEngine(new Game());
-		game.start();
+		coreEngine = new CoreEngine(new PlanetZoooom());
+		coreEngine.start();
 	}
 
 	@Override
@@ -84,11 +84,11 @@ public class Game implements IGame
 		printVersionInfo();
 
 		Info.camera = new FreeCamera(new Vector3f(0.0f,0.0f,20000.0f));
-		Info.projectionMatrix = planetZoooom.utils.MatrixUtils.perspectiveProjectionMatrix(fovParam, game.getWindowWidth(), game.getWindowHeight());
+		Info.projectionMatrix = planetZoooom.utils.MatrixUtils.perspectiveProjectionMatrix(fovParam, coreEngine.getWindowWidth(), coreEngine.getWindowHeight());
 		
 		modelViewMatrix = new Matrix4f();
 		normalMatrix = new Matrix4f();
-		orthographicProjectionMatrix = MatrixUtils.orthographicProjectionMatrix(0, -game.getWindowWidth(), -game.getWindowHeight(), 0.0f, -1.0f, 1.0f);
+		orthographicProjectionMatrix = MatrixUtils.orthographicProjectionMatrix(0, -coreEngine.getWindowWidth(), -coreEngine.getWindowHeight(), 0.0f, -1.0f, 1.0f);
 		lightDirection = new Vector3f();
 		
 		initOpenGL();
@@ -100,8 +100,7 @@ public class Game implements IGame
 		hudMode = 0;
 	}
 
-	private void initOpenGL()
-	{
+	private void initOpenGL() {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
@@ -134,7 +133,7 @@ public class Game implements IGame
 	private void initGameObjects() 
 	{
 		planet = new Planet(6500.0f, new Vector3f(0f, 0f, 0f));
-		hud = new HeadsUpDisplay(0, 0, "arial_nm.png", HUD_BG_WHITE);
+		hud = new HeadsUpDisplay(10, 10, "arial_nm.png", HUD_BG_WHITE);
 		sun = new BillBoard(new Vector3f(-25000.0f, 0.0f, 0.0f), 30000.0f, 30000.0f);
 		sun.setTexture(sunTexture);
 		sunGlow = new BillBoard(new Vector3f(-24900.0f, 0.0f, 0.0f), 40000.0f, 30000.0f);
@@ -220,11 +219,23 @@ public class Game implements IGame
 			atmosphereShader.loadUniform1f(planet.getRadius() + planet.getRadius() * 0.09f, "planetRadius");
 				
 			planet.getAtmosphere().getSphere().render(GL_TRIANGLES);
+
+			if(wireframe)
+			{
+				glDepthFunc(GL_LEQUAL);
+				glUseProgram(wireFrameShader.getId());
+				wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+				wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+				wireFrameShader.loadUniform1f(0.5f, "greytone");
+				planet.getAtmosphere().getSphere().render(GL_LINES);
+				wireFrameShader.loadUniform1f(0.8f, "greytone");
+				planet.getAtmosphere().getSphere().render(GL_POINTS);
+				glDepthFunc(GL_LESS);
+			}
 		}
 	}
 	
-	private void loadPlanetShaderUniforms(ShaderProgram shader)
-	{
+	private void loadPlanetShaderUniforms(ShaderProgram shader) {
 		glUseProgram(shader.getId());
 		shader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 		shader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
@@ -235,8 +246,7 @@ public class Game implements IGame
 		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
 	}
 	
-	private void drawPlanet()
-	{
+	private void drawPlanet() {
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getSphere().getModelMatrix(), modelViewMatrix);
 		Matrix4f.invert(modelViewMatrix, normalMatrix);
 		
@@ -273,8 +283,7 @@ public class Game implements IGame
 		}
 	}
 	
-	private void drawHUD()
-	{
+	private void drawHUD() {
 		glUseProgram(colorShader.getId());
 		{
 			colorShader.loadUniformMat4f(orthographicProjectionMatrix, "projectionMatrix", false);
@@ -292,8 +301,7 @@ public class Game implements IGame
 		glUseProgram(0);
 	}
 	
-	private void updateHud(int mode)
-	{
+	private void updateHud(int mode) {
 		switch(mode)
 		{
 			case HUD_MODE_OFF:
@@ -330,8 +338,7 @@ public class Game implements IGame
 		throw new IllegalArgumentException();
 	}
 	
-	private String getInfoHUDText()
-	{
+	private String getInfoHUDText() {
 		int triangleCount = planet.getSphere().getTriangleCount();
 		int totalTriangleCount = planet.getSphere().getTotalTriangleCount();
 		double trianglePercentage = triangleCount * 100 / (double) totalTriangleCount;
@@ -347,11 +354,10 @@ public class Game implements IGame
 				triangleCount, totalTriangleCount, trianglePercentage,
 				planet.getSphere().getVertexCount(),
 				planet.getSphere().getSubdivisions(),
-				game.timer.getFPS());
+				coreEngine.timer.getFPS());
 	}
 	
-	private String getAtmosphereHUDText()
-	{
+	private String getAtmosphereHUDText() {
 		Atmosphere atmosphere = planet.getAtmosphere();
 		return  String.format(
 				"Atmosphere properties\n\n"
@@ -368,8 +374,7 @@ public class Game implements IGame
 				
 	}
 	
-	private String getNoiseHUDText()
-	{
+	private String getNoiseHUDText() {
 		return String.format(
 				"Noise properties\n\n" +
 				"Mountain height: %.4f\n" + 
@@ -386,15 +391,13 @@ public class Game implements IGame
 				);
 	}
 	
-	private void printVersionInfo() 
-	{
+	private void printVersionInfo() {
 		System.out.println("GPU Vendor: " + glGetString(GL_VENDOR));
 		System.out.println("OpenGL version: " + glGetString(GL_VERSION));
 		System.out.println("GLSL version: " + glGetString(GL_SHADING_LANGUAGE_VERSION));
 	}
 	
-	private void reset()
-	{
+	private void reset() {
 		planet.setNoiseSeed(0);
 		planet.resetPlanet();
 		Info.camera = new FreeCamera(new Vector3f(0.0f,0.0f,20000.0f));

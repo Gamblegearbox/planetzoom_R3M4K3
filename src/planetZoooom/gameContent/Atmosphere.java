@@ -13,7 +13,7 @@ public class Atmosphere
 	private StaticSphere sphere;
 	private Vector3f position;
 	
-	private static final int ATMOSPHERE_SPHERE_SUBDIVISIONS = 6; 
+	private static final int ATMOSPHERE_SPHERE_SUBDIVISIONS = 4; 
 	private static final float ATMOSPHERE_PLANET_DISTANCE = 0.150f;
 	
 	private static final int SAMPLE_RAYS = 3;						// Number of sample rays to use in integral equation
@@ -34,7 +34,7 @@ public class Atmosphere
 	
 	public Atmosphere(Planet planet)
 	{
-		sphere = new StaticSphere(ATMOSPHERE_SPHERE_SUBDIVISIONS, planet.getRadius() * (1 + ATMOSPHERE_PLANET_DISTANCE));
+		sphere = new StaticSphere(ATMOSPHERE_SPHERE_SUBDIVISIONS, planet.getRadius() * (1.0f + ATMOSPHERE_PLANET_DISTANCE));
 		position = planet.getPosition();
 		modelMatrix = new Matrix4f().translate(position);
 		

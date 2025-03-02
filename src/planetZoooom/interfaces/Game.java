@@ -1,6 +1,6 @@
 package planetZoooom.interfaces;
 
-public interface IGame 
+public interface Game 
 {
     void init();
     void update(int deltaTime);

@@ -12,16 +12,16 @@ import org.lwjgl.opengl.GLContext;
 
 import planetZoooom.input.Cursor;
 import planetZoooom.input.Keyboard;
-import planetZoooom.interfaces.IGame;
+import planetZoooom.interfaces.Game;
 import planetZoooom.utils.Timer;
 
 public class CoreEngine
 {
-    private final IGame game;
+    private final Game game;
     public boolean running;
     public long windowHandle;
   
-    boolean fullscreen = true;
+    boolean fullscreen = false;
     
     private int windowWidth = 800; 
     private int windowHeight = 600;
@@ -31,7 +31,7 @@ public class CoreEngine
 
     public Timer timer;
     
-    public CoreEngine(IGame game)
+    public CoreEngine(Game game)
     {
         this.game = game;
     }

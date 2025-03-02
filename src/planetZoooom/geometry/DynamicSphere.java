@@ -39,8 +39,7 @@ public class DynamicSphere
 
 	private Matrix4f modelViewMatrix;
 	
-	public DynamicSphere(float radius, int minTriangles, Planet _planet) 
-	{
+	public DynamicSphere(float radius, int minTriangles, Planet _planet) {
 		positions = new float[minTriangles * 3 * 4 * 2];
 		normals = new float[minTriangles * 3 * 4 * 2];
 		planet = _planet; 
@@ -63,7 +62,7 @@ public class DynamicSphere
 	
 	public void update()
 	{						
-		Matrix4f.mul( Info.camera.getViewMatrix(),modelMatrix, modelViewMatrix);
+		Matrix4f.mul(Info.camera.getViewMatrix(),modelMatrix, modelViewMatrix);
 		
 		positionPointer = 0;
 
