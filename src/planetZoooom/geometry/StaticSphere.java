@@ -10,23 +10,15 @@ public class StaticSphere extends MeshObject
 {
 	private float radius;
 	private Vector3f[] verticesVec;
-	private Vector3f[] normalsVec;
 	private Vector2f[] uvCoordsVec;
 	
 	private static Vector3f[] directions = { Vertex.left(), Vertex.back(),
 			Vertex.right(), Vertex.front() };
 
-	public StaticSphere()
-	{
-		this(4, 1);
-	}
-
-	public StaticSphere(int subdivisions, float radius)
-	{
+	public StaticSphere(int subdivisions, float radius) {
 		this.radius = radius;
 		int resolution = 1 << subdivisions;
 		verticesVec = new Vector3f[(resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3];
-		normalsVec = new Vector3f[verticesVec.length];
 		uvCoordsVec = new Vector2f[verticesVec.length];
 		indices = new int[(1 << (subdivisions * 2 + 3)) * 3];
 	
@@ -39,25 +31,21 @@ public class StaticSphere extends MeshObject
 		mesh = new VertexArray(vertices, normals, uvCoords, indices);
 	}
 
-	private void createOctahedron(int resolution)
-	{
+	private void createOctahedron(int resolution) {
 		int v = 0;
 		int vBottom = 0;
 		int t = 0;
-		for (int i = 0; i < 4; i++)
-		{
+		for (int i = 0; i < 4; i++) {
 			verticesVec[v++] = Vertex.down();
 		}
 		// LOWERSPHERE
-		for (int i = 1; i <= resolution; i++)
-		{
+		for (int i = 1; i <= resolution; i++) {
 			float progress = (float) i / resolution;
 			Vector3f from;
 			Vector3f to;
 			verticesVec[v++] = to = Vertex.lerp(Vertex.down(),
 					Vertex.front(), progress);
-			for (int d = 0; d < 4; d++)
-			{
+			for (int d = 0; d < 4; d++) {
 				from = to;
 				to = Vertex.lerp(Vertex.down(), directions[d], progress);
 				t = createLowerStrip(i, v, vBottom, t);
@@ -67,8 +55,7 @@ public class StaticSphere extends MeshObject
 			vBottom = v - 1 - i * 4;
 		}
 		// UPPERSPHERE
-		for (int i = resolution - 1; i >= 1; i--)
-		{
+		for (int i = resolution - 1; i >= 1; i--) {
 			float progress = (float) i / resolution;
 			Vector3f from;
 			Vector3f to;
@@ -84,8 +71,7 @@ public class StaticSphere extends MeshObject
 			}
 			vBottom = v - 1 - i * 4;
 		}
-		for (int i = 0; i < 4; i++)
-		{
+		for (int i = 0; i < 4; i++) {
 			indices[t++] = vBottom;
 			indices[t++] = v;
 			indices[t++] = ++vBottom;
@@ -138,10 +124,10 @@ public class StaticSphere extends MeshObject
 
 	public void normalizeVerticesAndCreateNormals()
 	{
-		for (int i = 0; i < verticesVec.length; i++)
-		{
+		normals = new float[verticesVec.length * 3];
+
+		for (int i = 0; i < verticesVec.length; i++) {
 			verticesVec[i].normalise();
-			normals = new float[verticesVec.length * 3];
 			normals[i * 3    ] = verticesVec[i].x;
 			normals[i * 3 + 1] = verticesVec[i].y;
 			normals[i * 3 + 2] = verticesVec[i].z;
@@ -154,8 +140,7 @@ public class StaticSphere extends MeshObject
 		for (int i = 0; i < verticesVec.length; i++)
 		{
 			Vector3f vector = new Vector3f(verticesVec[i]);
-			if (vector.x == previousX)
-			{
+			if (vector.x == previousX) {
 				uvCoordsVec[i - 1].x = 1f;
 			}
 			previousX = vector.x;
@@ -181,10 +166,10 @@ public class StaticSphere extends MeshObject
 			verticesVec[i].scale((float) (radius));
 	}
 	
-	private void createVerticesAndUVFloatArrays()
-	{
+	private void createVerticesAndUVFloatArrays() {
 		vertices = new float[verticesVec.length * 3]; 
 		uvCoords = new float[verticesVec.length * 2];
+
 		for (int i = 0; i < verticesVec.length; i++)
 		{
 			vertices[i * 3    ] = verticesVec[i].x;

@@ -29,9 +29,15 @@ public class DynamicSphere
 	private int currentDepth;
 
 	private Vector3f v1,v2,v3,n1,n2,n3;
+
+	private Vector3f finalNormal = new Vector3f();
+	private Vector3f orthoVec1 = new Vector3f();
+	private Vector3f orthoVec2 = new Vector3f();
 	
 	private float radius;
-	
+	// private boolean hasWater = planet == null ? true : planet.getHasWater();
+	// private boolean wasWater;
+
 	private int positionPointer; 
 	private int triangleIndexCount;
 	private int minTriangles;
@@ -60,8 +66,7 @@ public class DynamicSphere
 		update();
 	}
 	
-	public void update()
-	{						
+	public void update() {						
 		Matrix4f.mul(Info.camera.getViewMatrix(),modelMatrix, modelViewMatrix);
 		
 		positionPointer = 0;
@@ -81,18 +86,15 @@ public class DynamicSphere
 		va.update(positions, normals, positionPointer, indices, triangleIndexCount);
 	}
 	
-	public void render(int mode)
-	{
+	public void render(int mode) {
 		va.render(mode);
 	}
 	
-	public int getTriangleCount()
-	{
+	public int getTriangleCount() {
 		return indices.length / 3;
 	}
 	
-	public int getVertexCount()
-	{
+	public int getVertexCount() {
 		return positionPointer / 3;
 	}
 	
@@ -120,23 +122,14 @@ public class DynamicSphere
 		return indices;
 	}
 	
-	private Vector3f finalNormal = new Vector3f();
-	private Vector3f orthoVec1 = new Vector3f();
-	private Vector3f orthoVec2 = new Vector3f();
-	private boolean hasWater;
-	private boolean wasWater;
-	
-	private int writePosition(Vector3f pos)
-	{
-		hasWater = planet.getHasWater();
+	private int writePosition(Vector3f pos) {
+
 		//Lenz Edition
-		wasWater = createNoise(pos, hasWater);
-		if(wasWater)
-		{
-			finalNormal = pos;
-		}
-		else
-		{
+		createNoise(pos);
+		// if(this.wasWater) {
+		// 	finalNormal = pos;
+		// }
+		// else {
 			orthoVec1.x = -pos.y;
 			orthoVec1.y = pos.x;
 			orthoVec1.z = 0;
@@ -154,14 +147,14 @@ public class DynamicSphere
 			orthoVec2.normalise(orthoVec2);
 			orthoVec1.scale(6500.0f);
 			orthoVec2.scale(6500.0f);
-			createNoise(orthoVec1, hasWater);
-			createNoise(orthoVec2, hasWater);
+			createNoise(orthoVec1);
+			createNoise(orthoVec2);
 			Vector3f.sub(orthoVec1, pos, orthoVec1);
 			Vector3f.sub(orthoVec2, pos, orthoVec2);
 			orthoVec1.scale(1/orthoLength1);
 			orthoVec2.scale(1/orthoLength2);
 			Vector3f.cross(orthoVec2, orthoVec1, finalNormal);
-		}
+		// }
 		
 		this.normals[positionPointer] = finalNormal.x;
 		this.positions[positionPointer++] = pos.x;
@@ -173,8 +166,7 @@ public class DynamicSphere
 		return (positionPointer-3) / 3;
 	}
 		
-	private float[] getPositions(int[] triangleIndices)
-	{
+	private float[] getPositions(int[] triangleIndices) {
 		float[] triangle = new float[9];
 		
 		for(int i = 0; i < 9; i++)
@@ -183,8 +175,7 @@ public class DynamicSphere
 		return triangle;
 	}
 	
-	private int[] subdivide(int[] triangles, int triangleCount, int depth)
-	{
+	private int[] subdivide(int[] triangles, int triangleCount, int depth) {
 		int[] newTriangles = new int[triangleCount * 4];
 		int trianglePointer = 0;
 		int[] triangleIndices;
@@ -216,14 +207,13 @@ public class DynamicSphere
 		return newTriangles;
 	}
 	
-	private void setVec(Vector3f v, float x, float y, float z)
-	{
+	private void setVec(Vector3f v, float x, float y, float z) {
 		v.x = x;
 		v.y = y;
 		v.z = z;
 	}
-	private int[] createChildVertices(int[] triangleIndices)
-	{	
+
+	private int[] createChildVertices(int[] triangleIndices) {	
 		float[] positions = getPositions(triangleIndices);
 		int[] newIndices = new int[3];
 		setVec(v1, positions[0], positions[1], positions[2]);
@@ -249,8 +239,7 @@ public class DynamicSphere
 		return newIndices;
 	} 
 	
-	private int[][] createChildTriangleIndices(int[] parentIndices, int[] childIndices)
-	{
+	private int[][] createChildTriangleIndices(int[] parentIndices, int[] childIndices) {
 		return new int[][]
 			{
 				new int[] {parentIndices[0], childIndices[1], childIndices[0]},
@@ -260,15 +249,13 @@ public class DynamicSphere
 			};
 	}
 
-	private boolean isInViewFrustum(float[] positions) 
-	{
+	private boolean isInViewFrustum(float[] positions) {
 		Matrix4f p = Info.projectionMatrix;
 		float x,y,z;
 
 
 		float[] w = new float[3];
-		for(int i = 0; i < positions.length; i+=3)
-		{
+		for(int i = 0; i < positions.length; i+=3) {
 			//Object space -> world space -> camera space
 			x = (modelViewMatrix.m00 * positions[i]) + (modelViewMatrix.m10 * positions[i+1]) + (modelViewMatrix.m20 * positions[i+2]) + (modelViewMatrix.m30);
 			y = (modelViewMatrix.m01 * positions[i]) + (modelViewMatrix.m11 * positions[i+1]) + (modelViewMatrix.m21 * positions[i+2]) + (modelViewMatrix.m31);
@@ -293,19 +280,18 @@ public class DynamicSphere
 			positions[i+2] = z;
 		}
 		
-		if(intersectsNDCPlane(positions))
+		if(intersectsNDCPlane(positions)) {
 			return true;
+		}
 		
-		if(frustumCompletlyInTriangle(positions))
-		{
+		if(frustumCompletlyInTriangle(positions)) {
 			if(positions[2] > 0 && positions[5] > 0 && positions[8] > 0)
 			return true;
 		}
 		return false;
 	}
 
-	private boolean intersectsNDCPlane(float[] triangle)
-	{
+	private boolean intersectsNDCPlane(float[] triangle) {
 		float[] x = {-1, 1, 1, -1};
 		float[] y = {1, 1, -1, -1};
  
@@ -329,23 +315,24 @@ public class DynamicSphere
 		return false;
 	}
 	
-	private boolean lineIntersection(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3)
-	{
+	private boolean lineIntersection(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 		double d = (x0-x1)*(y2-y3) - (y0-y1)*(x2-x3);
-		if(d == 0) //parallel oder kollinear?
+		if(d == 0) {//parallel oder kollinear?
 			return false;
+		}
+
 		double xi = ((x2-x3)*(x0*y1-y0*x1)-(x0-x1)*(x2*y3-y2*x3)) / d;
 		double yi = ((y2-y3)*(x0*y1-y0*x1)-(y0-y1)*(x2*y3-y2*x3)) / d;
-		if(inIntervall(xi, yi, x0, y0, x1, y1))
-			if(inIntervall(xi, yi, x2, y2, x3, y3))
-				return true;
 		
+		if(inIntervall(xi, yi, x0, y0, x1, y1)) {
+			if(inIntervall(xi, yi, x2, y2, x3, y3)) {
+				return true;
+			}
+		}
 		return false;
 	}
 	
-	private boolean inIntervall(double xi, double yi, float x0, float y0, float x1, float y1)
-	{
-		
+	private boolean inIntervall(double xi, double yi, float x0, float y0, float x1, float y1) {	
 		float minX = Math.min(x0, x1);
 		float maxX = Math.max(x0, x1);
 
@@ -365,8 +352,7 @@ public class DynamicSphere
 		return false;
 	}
 	
-	private boolean frustumCompletlyInTriangle(float[] triangle)
-	{
+	private boolean frustumCompletlyInTriangle(float[] triangle) {
 		float minX = Math.min(Math.min(triangle[0], triangle[3]), triangle[6]);
 		float minY = Math.min(Math.min(triangle[1], triangle[4]), triangle[7]);
 		float maxX = Math.max(Math.max(triangle[0], triangle[3]), triangle[6]);
@@ -375,8 +361,7 @@ public class DynamicSphere
 		return (minX <= -1 && maxX >= 1 && minY <= -1 && maxY >= 1);
 	}
 	
-	private boolean isInViewFrustum(int[] triangleIndices)
-	{	
+	private boolean isInViewFrustum(int[] triangleIndices) {	
 		float[] positions = getPositions(triangleIndices);
 		
 		return isInViewFrustum(positions);
@@ -399,8 +384,7 @@ public class DynamicSphere
 	}*/
 	
 	//NEW isFacingTowardsCamera (Prof. Dr. Lenz edition)
-	private boolean isFacingTowardsCamera(int[] triangleIndices) 
-	{
+	private boolean isFacingTowardsCamera(int[] triangleIndices) {
 		float[] a = getPositions(triangleIndices);
 		setVec(v1, a[0], a[1], a[2]);
 
@@ -414,23 +398,19 @@ public class DynamicSphere
 		return dot > ANGLE_TOLERANCE;
 	}
 	
-	public float getRadius()
-	{
+	public float getRadius() {
 		return radius;
 	}
 	
-	public Matrix4f getModelMatrix()
-	{
+	public Matrix4f getModelMatrix() {
 		return modelMatrix;
 	}
 
-	public int getSubdivisions()
-	{
+	public int getSubdivisions() {
 		return currentDepth;
 	}
 	
-	public int getTotalTriangleCount()
-	{
+	public int getTotalTriangleCount() {
 		int totalTriangles = 8;
 		for(int i = 0; i < currentDepth; i++)
 			totalTriangles = totalTriangles << 2;
@@ -438,34 +418,28 @@ public class DynamicSphere
 		return totalTriangles;
 	}
 	
-	public boolean createNoise(Vector3f v, boolean hasWater)
-	{
+	public void createNoise(Vector3f v) {
 		double lambda = planet.getLambdaBaseFactor() * getRadius();
 		double noiseSeed = planet.getNoiseSeed();
 		int octaves = planet.getOctaves();
 		double amplitude = planet.getAmplitude();
-		boolean wasWater;
 		
 		float noise = (float) CustomNoise.perlinNoise(v.x + noiseSeed, v.y + noiseSeed, v.z + noiseSeed, octaves, lambda, amplitude);
-		wasWater = false;
+		//this.wasWater = false;
 		
-		if(hasWater)
-		{
-			if (noise < 0)
-			{
-				noise = 0;
-				wasWater = true;
-			}
-		}
+		// if(hasWater) {
+		// 	if (noise < 0)
+		// 	{
+		// 		noise = 0;
+		// 		this.wasWater = true;
+		// 	}
+		// }
 
 		// 0.14 % = 8 km von 6000 km
 		v.scale(1 + noise * planet.getMountainHeight());
-		
-		return wasWater;
 	}
 	
-	public class SphereVertexArray
-	{
+	public class SphereVertexArray {
 		private int vertexCount;
 		private int indexCount;
 		private int vaoHandle;
@@ -476,30 +450,26 @@ public class DynamicSphere
 		public static final int VERTEX_LOCATION = 0;
 		public static final int NORMAL_LOCATION = 2;
 		
-		public SphereVertexArray(float[] vertices, float[] normals, int vertexCount, int[] indices)
-		{
+		public SphereVertexArray(float[] vertices, float[] normals, int vertexCount, int[] indices) {
 			initBufferHandles();
 			this.vertexCount = vertexCount;
 			doBufferStuff(vertices, normals, indices);
 		}
 		
-		public void update(float[] vertices, float[] normals, int vertexCount, int[] indices, int indexCount)
-		{
+		public void update(float[] vertices, float[] normals, int vertexCount, int[] indices, int indexCount) {
 			this.vertexCount = vertexCount;
 			this.indexCount = indexCount;
 			doBufferStuff(vertices, normals, indices);
 		}
 		
-		private void initBufferHandles()
-		{
+		private void initBufferHandles() {
 			vaoHandle = glGenVertexArrays();
 			vboHandle = glGenBuffers();
 			nboHandle = glGenBuffers();
 			iboHandle = glGenBuffers();
 		}
 		
-		private void doBufferStuff(float[] vertices, float[] normals, int[] indices)
-		{		
+		private void doBufferStuff(float[] vertices, float[] normals, int[] indices) {		
 			glBindVertexArray(vaoHandle);
 			
 			FloatBuffer vBuffer = BufferUtils.createFloatBuffer(vertexCount);
@@ -527,8 +497,7 @@ public class DynamicSphere
 			glBindVertexArray(0);
 		}
 		
-		public void render(int mode)
-		{
+		public void render(int mode) {
 			glBindVertexArray(vaoHandle);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboHandle);
 			glDrawElements(mode, indexCount, GL_UNSIGNED_INT, 0);

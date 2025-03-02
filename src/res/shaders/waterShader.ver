@@ -17,7 +17,6 @@ out DATA {
 	vec3 positionVector;
 	vec3 viewDir;
 	vec3 lightDir;
-	float mountainHeight;
 } pass_data;
 
 uniform mat4 modelViewMatrix;
@@ -25,12 +24,8 @@ uniform mat4 projectionMatrix;
 uniform mat4 normalMatrix;
 uniform vec3 cameraPosition;
 uniform vec3 lightPosition;
-uniform float radius;
 
-uniform float mountainHeight;
-
-void main(void)
-{
+void main(void) {
 	lightPosition * 10.0;
 	pass_data.positionVector = position;
 	pass_data.position = vec3(modelViewMatrix * vec4(position, 1.0));
@@ -40,8 +35,6 @@ void main(void)
 
 	pass_data.viewDir = cameraPosition - position;
 	pass_data.lightDir = vec3(modelViewMatrix * vec4(lightPosition, 1.0));
-
-	pass_data.mountainHeight = mountainHeight;
 
 	gl_Position = (projectionMatrix * modelViewMatrix) * vec4(position, 1.0);
 }

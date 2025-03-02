@@ -17,9 +17,11 @@ public class Planet //implements GameObjectListener
 	private final static int MIN_TRIANGLES = 5000;
 	final static float CAM_COLLISION_OFFSET = 200;
 
-	private DynamicSphere sphere;
 	private Vector3f position;
+
+	private DynamicSphere planetSurface;
 	private Atmosphere atmosphere;
+	private WaterSurface waterSurface;
 
 	private float amplitude;
 	private int octaves;
@@ -38,8 +40,9 @@ public class Planet //implements GameObjectListener
 	public Planet(float radius, Vector3f position)
 	{
 		this.position = position;
-		this.sphere = new DynamicSphere(radius, MIN_TRIANGLES, this);
+		this.planetSurface = new DynamicSphere(radius, MIN_TRIANGLES, this);
 		this.atmosphere = new Atmosphere(this);
+		this.waterSurface = new WaterSurface(this);
 
 		//sphere.addListener(this);
 
@@ -56,9 +59,8 @@ public class Planet //implements GameObjectListener
 		mountainHeight = MIN_MOUNTAIN_HEIGHT;
 	}
 
-	public void update()
-	{
-		sphere.update();
+	public void update() {
+		planetSurface.update();
 
 		Vector3f planetToCam = new Vector3f();
 		Vector3f.sub(Info.camera.getPosition(), getPosition(), planetToCam);
@@ -69,8 +71,7 @@ public class Planet //implements GameObjectListener
 		handleCollision(planetToCam);
 	}
 	
-	public void setHasWater(boolean water)
-	{
+	public void setHasWater(boolean water) {
 		hasWater = water;
 	}
 	
@@ -191,7 +192,7 @@ public class Planet //implements GameObjectListener
 
 	public float getRadius()
 	{
-		return sphere.getRadius();
+		return planetSurface.getRadius();
 	}
 
 	public Vector3f getPosition()
@@ -201,12 +202,12 @@ public class Planet //implements GameObjectListener
 
 	public int getTotalTriangleCount()
 	{
-		return sphere.getTriangleCount();
+		return planetSurface.getTriangleCount();
 	}
 
 	public int getVertexCount() 
 	{
-		return sphere.getVertexCount();
+		return planetSurface.getVertexCount();
 	}
 
 	public Atmosphere getAtmosphere()
@@ -214,9 +215,13 @@ public class Planet //implements GameObjectListener
 		return atmosphere;
 	}
 
-	public DynamicSphere getSphere()
+	public WaterSurface getWaterSurface(){
+		return waterSurface;
+	}
+
+	public DynamicSphere getPlanetSurface()
 	{
-		return sphere;
+		return planetSurface;
 	}
 
 	private float getLambda(float planetRadius)

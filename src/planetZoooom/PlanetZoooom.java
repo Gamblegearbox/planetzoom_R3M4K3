@@ -43,10 +43,10 @@ public class PlanetZoooom implements Game
 	private ShaderProgram marsShader;
 	private ShaderProgram dessertShader;
 	private ShaderProgram uniColorPlanetShader;
+	private ShaderProgram waterShader;
 	private ShaderProgram wireFrameShader;	
 	private ShaderProgram hudShader;
 	private ShaderProgram sunShader;
-	private ShaderProgram sunGlowShader;
 	private ShaderProgram atmosphereShader;
 	private ShaderProgram colorShader;
 
@@ -69,6 +69,7 @@ public class PlanetZoooom implements Game
 	private static final float[] HUD_BG_WHITE = new float[] {0.6f, 0.6f, 0.6f, 0.9f};
 	private static final float[] HUD_BG_GREY = new float[] {0.6f, 0.6f, 0.6f, 0.9f};
 	private static final float[] HUD_BG_PURPLE = new float[] {0.73f, 0.47f, 0.8f, 0.9f};
+
 	
 	private int hudMode;
 	
@@ -79,8 +80,7 @@ public class PlanetZoooom implements Game
 	}
 
 	@Override
-	public void init() 
-	{
+	public void init() {
 		printVersionInfo();
 
 		Info.camera = new FreeCamera(new Vector3f(0.0f,0.0f,20000.0f));
@@ -110,28 +110,25 @@ public class PlanetZoooom implements Game
         glPointSize(2.5f);
 	}
 	
-	private void initTextures() 
-	{
+	private void initTextures() {
 		sunTexture = new Texture("src/res/textures/sun.png");
 		sunGlowTexture = new Texture("src/res/textures/sunGlow3.png");
 	}
 
-	private void initShaders() 
-	{
+	private void initShaders() {
 		hudShader = new ShaderProgram("HUDShader");
 		earthShader = new ShaderProgram("earthShader");
 		marsShader = new ShaderProgram("marsShader");
 		dessertShader = new ShaderProgram("dessertShader");
 		uniColorPlanetShader = new ShaderProgram("uniColorPlanetShader");
+		waterShader = new ShaderProgram("waterShader");
 		wireFrameShader = new ShaderProgram("wireFrameShader");
 		sunShader = new ShaderProgram("sunShader");
-		sunGlowShader = new ShaderProgram("sunGlowShader");
 		atmosphereShader = new ShaderProgram("atmosphereShader");
 		colorShader = new ShaderProgram("testShader");
 	}
 
-	private void initGameObjects() 
-	{
+	private void initGameObjects() {
 		planet = new Planet(6500.0f, new Vector3f(0f, 0f, 0f));
 		hud = new HeadsUpDisplay(10, 10, "arial_nm.png", HUD_BG_WHITE);
 		sun = new BillBoard(new Vector3f(-25000.0f, 0.0f, 0.0f), 30000.0f, 30000.0f);
@@ -169,6 +166,9 @@ public class PlanetZoooom implements Game
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 		drawPlanet();
+		if(planet.getHasWater()) {
+			drawWaterSurface();
+		}
 
 		updateHud(hudMode);
 		drawHUD();
@@ -235,54 +235,79 @@ public class PlanetZoooom implements Game
 		}
 	}
 	
-	private void loadPlanetShaderUniforms(ShaderProgram shader) {
-		glUseProgram(shader.getId());
-		shader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
-		shader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-		shader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
-		shader.loadUniformVec3f(new Vector3f(-100000.0f, 0.0f, 0.0f), "lightPosition");
-		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
-		shader.loadUniform1f(planet.getRadius(), "radius");
-		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
-	}
-	
 	private void drawPlanet() {
-		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getSphere().getModelMatrix(), modelViewMatrix);
+		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getPlanetSurface().getModelMatrix(), modelViewMatrix);
 		Matrix4f.invert(modelViewMatrix, normalMatrix);
 		
-		switch(planet.getShaderMode())
-		{
-		case Planet.STYLE_EARTH:	loadPlanetShaderUniforms(earthShader);
-									planet.setHasWater(true);
-									break;
-		case Planet.STYLE_MARS:		loadPlanetShaderUniforms(marsShader);
-									planet.setHasWater(false);
-									break;
-		case Planet.STYLE_DUNE: 	loadPlanetShaderUniforms(dessertShader);
-									planet.setHasWater(false);
-									break;
-		case Planet.STYLE_UNICOLOR: loadPlanetShaderUniforms(uniColorPlanetShader);
-									planet.setHasWater(true);
-									break;
-		default: 					throw new IllegalArgumentException();
+		switch(planet.getShaderMode()) {
+			case Planet.STYLE_EARTH:	loadPlanetShaderUniforms(earthShader);
+										planet.setHasWater(true);
+										break;
+			case Planet.STYLE_MARS:		loadPlanetShaderUniforms(marsShader);
+										planet.setHasWater(false);
+										break;
+			case Planet.STYLE_DUNE: 	loadPlanetShaderUniforms(dessertShader);
+										planet.setHasWater(false);
+										break;
+			case Planet.STYLE_UNICOLOR: loadPlanetShaderUniforms(uniColorPlanetShader);
+										planet.setHasWater(true);
+										break;
+			default: 					throw new IllegalArgumentException();
 		}
 		
-		planet.getSphere().render(GL_TRIANGLES);
+		planet.getPlanetSurface().render(GL_TRIANGLES);
 		
-		if(wireframe)
-		{
+		if(wireframe) {
 			glDepthFunc(GL_LEQUAL);
 			glUseProgram(wireFrameShader.getId());
 			wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 			wireFrameShader.loadUniform1f(0.5f, "greytone");
-			planet.getSphere().render(GL_LINES);
+			planet.getPlanetSurface().render(GL_LINES);
 			wireFrameShader.loadUniform1f(0.8f, "greytone");
-			planet.getSphere().render(GL_POINTS);
+			planet.getPlanetSurface().render(GL_POINTS);
 			glDepthFunc(GL_LESS);
 		}
 	}
 	
+	private void drawWaterSurface()
+	{
+		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getWaterSurface().getModelMatrix(), modelViewMatrix);
+		
+		glUseProgram(waterShader.getId());
+		waterShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		waterShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+		waterShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
+		waterShader.loadUniformVec3f(sun.getPosition(), "lightPosition");
+		
+		switch(planet.getShaderMode()) {
+			case Planet.STYLE_EARTH:	waterShader.loadUniformVec3f(planet.getWaterSurface().BLUE, "waterColor");
+			case Planet.STYLE_DUNE: 	waterShader.loadUniformVec3f(planet.getWaterSurface().BLUE, "waterColor");		
+										break;
+			case Planet.STYLE_MARS:		waterShader.loadUniformVec3f(planet.getWaterSurface().RED, "waterColor");
+			case Planet.STYLE_UNICOLOR: waterShader.loadUniformVec3f(planet.getWaterSurface().RED, "waterColor");
+										break;
+	
+			default: 					throw new IllegalArgumentException();
+		}
+		
+		waterShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+
+		planet.getWaterSurface().getSphere().render(GL_TRIANGLES);
+
+		if(wireframe) {
+			glDepthFunc(GL_LEQUAL);
+			glUseProgram(wireFrameShader.getId());
+			wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+			wireFrameShader.loadUniform1f(0.5f, "greytone");
+			planet.getWaterSurface().getSphere().render(GL_LINES);
+			wireFrameShader.loadUniform1f(0.8f, "greytone");
+			planet.getWaterSurface().getSphere().render(GL_POINTS);
+			glDepthFunc(GL_LESS);
+		}
+	}
+
 	private void drawHUD() {
 		glUseProgram(colorShader.getId());
 		{
@@ -339,8 +364,8 @@ public class PlanetZoooom implements Game
 	}
 	
 	private String getInfoHUDText() {
-		int triangleCount = planet.getSphere().getTriangleCount();
-		int totalTriangleCount = planet.getSphere().getTotalTriangleCount();
+		int triangleCount = planet.getPlanetSurface().getTriangleCount();
+		int totalTriangleCount = planet.getPlanetSurface().getTotalTriangleCount();
 		double trianglePercentage = triangleCount * 100 / (double) totalTriangleCount;
 		
 		return  String.format(
@@ -352,8 +377,8 @@ public class PlanetZoooom implements Game
 				+ "FPS:          %d",
 				GameUtils.getDistanceBetween(planet.getPosition(), Info.camera.getPosition()) - planet.getRadius(), 
 				triangleCount, totalTriangleCount, trianglePercentage,
-				planet.getSphere().getVertexCount(),
-				planet.getSphere().getSubdivisions(),
+				planet.getPlanetSurface().getVertexCount(),
+				planet.getPlanetSurface().getSubdivisions(),
 				coreEngine.timer.getFPS());
 	}
 	
@@ -479,5 +504,16 @@ public class PlanetZoooom implements Game
 				break;
 			}
 		}
+	}
+
+	private void loadPlanetShaderUniforms(ShaderProgram shader) {
+		glUseProgram(shader.getId());
+		shader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		shader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+		shader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
+		shader.loadUniformVec3f(sun.getPosition(), "lightPosition");
+		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+		shader.loadUniform1f(planet.getRadius(), "radius");
+		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
 	}
 }

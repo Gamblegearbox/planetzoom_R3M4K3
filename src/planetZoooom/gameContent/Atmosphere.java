@@ -69,17 +69,17 @@ public class Atmosphere
 	}
 
 
-	public void loadSpecificUniforms(ShaderProgram atmosphereShader)
+	public void loadSpecificUniforms(ShaderProgram shader)
 	{
-		atmosphereShader.loadUniformVec3f(new Vector3f(wavelengths[0],wavelengths[1], wavelengths[2]), "inverseWavelength");
-		atmosphereShader.loadUniform1f(MIE_SCATTERING * sunBrightness, "mieScattering");
-		atmosphereShader.loadUniform1f((float)(MIE_SCATTERING * 4 * Math.PI), "mieScattering4Pi");
-		atmosphereShader.loadUniform1f(rayleighScattering * sunBrightness, "rayleighScattering");
-		atmosphereShader.loadUniform1f((float)(rayleighScattering * 4 * Math.PI), "rayleighScattering4Pi");
-		atmosphereShader.loadUniform1f(sphere.getRadius(), "atmosphereRadius");
-		atmosphereShader.loadUniform1f(RAYLEIGH_SCALE_DEPTH, "scaleDepth");
-		atmosphereShader.loadUniform1f(MIE_PHASE_ASYMETRY_FACTOR, "miePhaseAsymetryFactor");
-		atmosphereShader.loadUniform1f(SAMPLE_RAYS, "sampleRays");
+		shader.loadUniformVec3f(new Vector3f(wavelengths[0],wavelengths[1], wavelengths[2]), "inverseWavelength");
+		shader.loadUniform1f(MIE_SCATTERING * sunBrightness, "mieScattering");
+		shader.loadUniform1f((float)(MIE_SCATTERING * 4 * Math.PI), "mieScattering4Pi");
+		shader.loadUniform1f(rayleighScattering * sunBrightness, "rayleighScattering");
+		shader.loadUniform1f((float)(rayleighScattering * 4 * Math.PI), "rayleighScattering4Pi");
+		shader.loadUniform1f(sphere.getRadius(), "atmosphereRadius");
+		shader.loadUniform1f(RAYLEIGH_SCALE_DEPTH, "scaleDepth");
+		shader.loadUniform1f(MIE_PHASE_ASYMETRY_FACTOR, "miePhaseAsymetryFactor");
+		shader.loadUniform1f(SAMPLE_RAYS, "sampleRays");
 	}
 	
 	public Vector3f getPosition()

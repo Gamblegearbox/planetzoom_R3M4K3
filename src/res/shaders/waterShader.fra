@@ -1,0 +1,39 @@
+//https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php
+//http://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
+
+#version 330
+#pragma debug(on)
+#pragma optimize(off)
+
+in DATA {
+	vec3 position;
+	vec3 normal;
+	vec2 uv;
+	vec3 positionVector;
+	vec3 viewDir;
+	vec3 lightDir;
+} pass_data;
+
+uniform vec3 waterColor;
+
+out vec4 out_Color;
+
+void main(void) {	
+ 	vec3 L = normalize(pass_data.lightDir);   
+	vec3 E = normalize(-pass_data.position);  
+	vec3 R = normalize(-reflect(L,pass_data.normal));  
+ 
+ 	float ambient = 0.1;
+	float diffuse = max(dot(pass_data.normal,L), 0.0);
+   	diffuse = clamp(diffuse, 0.0, 1.0);     
+
+ 	float exponent = 4.0;
+	float lightSpecular = 1.0 * pow(max(dot(R,E),0.0),exponent);
+	lightSpecular = clamp(lightSpecular, 0.0, 1.0); 
+	float mul = 1.0;
+	
+	out_Color = vec4(waterColor + lightSpecular, 1.0);
+	out_Color.xyz *= (diffuse + ambient);	
+	out_Color *= 0.9;
+
+}
