@@ -14,7 +14,6 @@ out DATA {
 	vec3 position;
 	vec3 normal;
 	vec2 uv;
-	vec3 positionVector;
 	vec3 viewDir;
 	vec3 lightDir;
 } pass_data;
@@ -26,8 +25,6 @@ uniform vec3 cameraPosition;
 uniform vec3 lightPosition;
 
 void main(void) {
-	lightPosition * 10.0;
-	pass_data.positionVector = position;
 	pass_data.position = vec3(modelViewMatrix * vec4(position, 1.0));
 	pass_data.normal = normalize(vec3(normalMatrix * vec4(normal, 1.0)));
 	

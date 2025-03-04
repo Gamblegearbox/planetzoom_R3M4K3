@@ -2,13 +2,13 @@ package planetZoooom.input;
 
 import static org.lwjgl.glfw.GLFW.*;
 import planetZoooom.gameContent.FreeCamera;
-import planetZoooom.interfaces.ICameraControl;
+import planetZoooom.interfaces.CameraControl;
 
-public class FreeCameraControl implements ICameraControl
+public class FreeCameraControl implements CameraControl
 {
 	private FreeCamera cam;
-	private float velocity = ICameraControl.MAX_CAM_SPEED;
-	private final static float rollSpeed = 0.00025f * ICameraControl.MAX_CAM_SPEED;
+	private float velocity = CameraControl.MAX_CAM_SPEED;
+	private final static float rollSpeed = 0.00025f * CameraControl.MAX_CAM_SPEED;
 	private boolean boostEnabled;
 	
 	public FreeCameraControl(FreeCamera cam)

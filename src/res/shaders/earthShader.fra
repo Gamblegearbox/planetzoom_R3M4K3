@@ -59,29 +59,21 @@ void main(void)
 	float grass = 0.06;
 	float sand = 0.04;
 	
-	if(heightGradientValue > snow)
-	{
+	if(heightGradientValue > snow){
 		mul = heightGradientValue;
 		heightColor = vec4(0.87 * mul, 0.90 * mul, 0.89 * mul, 1.0);
 	}
-	else if(heightGradientValue > stone) 
-	{
+	else if(heightGradientValue > stone) {
 		mul = heightGradientValue + 1 - stone;
 		heightColor = vec4(0.6 * mul, 0.56 * mul, 0.39 * mul, 1.0);
 	}
-	else if(heightGradientValue > grass) 
-	{
+	else if(heightGradientValue > grass) {
 		mul = heightGradientValue + 1 - grass;
 		heightColor = vec4(0.22 * mul, 0.58 * mul, 0.28 * mul, 1.0);
 	}
-	else if(heightGradientValue > sand)
-	{
+	else {
 		mul = heightGradientValue + 1 - sand;
 		heightColor = vec4(0.89 * mul, 0.78 * mul, 0.41 * mul, 1.0);
-	}
-	else
-	{
-		heightColor = vec4(0.18 + lightSpecular, 0.42 + lightSpecular, 0.57 + lightSpecular, 1.0);
 	}
 	
 	finalColor(heightColor, diffuse, ambient);

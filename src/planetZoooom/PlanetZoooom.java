@@ -16,7 +16,7 @@ import planetZoooom.gameContent.Planet;
 import planetZoooom.graphics.ShaderProgram;
 import planetZoooom.graphics.Texture;
 import planetZoooom.input.Keyboard;
-import planetZoooom.interfaces.ICameraControl;
+import planetZoooom.interfaces.CameraControl;
 import planetZoooom.interfaces.Game;
 import planetZoooom.utils.GameUtils;
 import planetZoooom.utils.Info;
@@ -25,7 +25,7 @@ import planetZoooom.utils.MatrixUtils;
 public class PlanetZoooom implements Game 
 {
 	private static CoreEngine coreEngine;
-	private ICameraControl cameraControl;
+	private CameraControl cameraControl;
 	private float fovParam = 45.0f;
 
 	// GAMEOBJECTS
@@ -69,6 +69,8 @@ public class PlanetZoooom implements Game
 	private static final float[] HUD_BG_WHITE = new float[] {0.6f, 0.6f, 0.6f, 0.9f};
 	private static final float[] HUD_BG_GREY = new float[] {0.6f, 0.6f, 0.6f, 0.9f};
 	private static final float[] HUD_BG_PURPLE = new float[] {0.73f, 0.47f, 0.8f, 0.9f};
+
+	private static final Vector3f SUN_POSITION = new Vector3f(-2000000.0f, 0.0f, 0.0f);
 
 	
 	private int hudMode;
@@ -131,9 +133,9 @@ public class PlanetZoooom implements Game
 	private void initGameObjects() {
 		planet = new Planet(6500.0f, new Vector3f(0f, 0f, 0f));
 		hud = new HeadsUpDisplay(10, 10, "arial_nm.png", HUD_BG_WHITE);
-		sun = new BillBoard(new Vector3f(-25000.0f, 0.0f, 0.0f), 30000.0f, 30000.0f);
+		sun = new BillBoard(new Vector3f(SUN_POSITION.x / 100f, SUN_POSITION.y, SUN_POSITION.z), 20000.0f, 20000.0f);
 		sun.setTexture(sunTexture);
-		sunGlow = new BillBoard(new Vector3f(-24900.0f, 0.0f, 0.0f), 40000.0f, 30000.0f);
+		sunGlow = new BillBoard(new Vector3f(SUN_POSITION.x / 100f, SUN_POSITION.y, SUN_POSITION.z), 30000.0f, 20000.0f);
 		sunGlow.setTexture(sunGlowTexture);
 	}
 
@@ -174,65 +176,53 @@ public class PlanetZoooom implements Game
 		drawHUD();
 	}
 
-	private void drawSun()
-	{
+	private void drawSun() {
 		Matrix4f.mul(Info.camera.getViewMatrix(), sun.getModelMatrix(), modelViewMatrix);
-		
-
+	
 		glUseProgram(sunShader.getId());
-		{
-			sunShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
-			sunShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-			sunShader.loadUniformVec3f(sun.getPosition(), "billboardCenter");
-			sunShader.loadUniformVec3f(Info.camera.getLocalUpVector(), "cameraUp");
-			sunShader.loadUniformVec3f(Info.camera.getLocalRightVector(), "cameraRight");	
-			sun.render(GL_TRIANGLES);
-			sunGlow.render(GL_TRIANGLES);
-		}
-//
-//		glUseProgram(sunShader.getId());
-//		{
-//			sunShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
-//			sunShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-//			sunShader.loadUniformVec3f(sunGlow.getPosition(), "billboardCenter");
-//		}
+		sunShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		sunShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+		sunShader.loadUniformVec3f(sun.getPosition(), "billboardCenter");
+		sunShader.loadUniformVec3f(Info.camera.getLocalUpVector(), "cameraUp");
+		sunShader.loadUniformVec3f(Info.camera.getLocalRightVector(), "cameraRight");	
+		sun.render(GL_TRIANGLES);
+		sunGlow.render(GL_TRIANGLES);
+		
 	}
 	
-	private void drawAtmosphere()
-	{
+	private void drawAtmosphere() {
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getAtmosphere().getModelMatrix(), modelViewMatrix);
-		Vector3f.sub(sun.getPosition(), planet.getAtmosphere().getPosition(), lightDirection);
+		Vector3f.sub(SUN_POSITION, planet.getAtmosphere().getPosition(), lightDirection);
 		lightDirection.normalise();
 		
 		glUseProgram(atmosphereShader.getId());
-		{
-			float cameraHeight = GameUtils.getDistanceBetween(planet.getPosition(), Info.camera.getPosition());
-			planet.getAtmosphere().loadSpecificUniforms(atmosphereShader);
-			atmosphereShader.loadUniform1f(cameraHeight, "cameraHeight");
-			atmosphereShader.loadUniformVec3f(lightDirection, "lightDirection");
-			atmosphereShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
-			atmosphereShader.loadUniform1f(1.0f / (planet.getAtmosphere().getSphere().getRadius() - planet.getRadius()), "fScale");
-			atmosphereShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
-			atmosphereShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-			atmosphereShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
-			atmosphereShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
-			atmosphereShader.loadUniform1f(planet.getRadius() + planet.getRadius() * 0.09f, "planetRadius");
-				
-			planet.getAtmosphere().getSphere().render(GL_TRIANGLES);
+		float cameraHeight = GameUtils.getDistanceBetween(planet.getPosition(), Info.camera.getPosition());
+		planet.getAtmosphere().loadSpecificUniforms(atmosphereShader);
+		atmosphereShader.loadUniform1f(cameraHeight, "cameraHeight");
+		atmosphereShader.loadUniformVec3f(lightDirection, "lightDirection");
+		atmosphereShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+		atmosphereShader.loadUniform1f(1.0f / (planet.getAtmosphere().getSphere().getRadius() - planet.getRadius()), "fScale");
+		atmosphereShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		atmosphereShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+		atmosphereShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
+		atmosphereShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+		atmosphereShader.loadUniform1f(planet.getRadius() + planet.getRadius() * 0.09f, "planetRadius");
+			
+		planet.getAtmosphere().getSphere().render(GL_TRIANGLES);
 
-			if(wireframe)
-			{
-				glDepthFunc(GL_LEQUAL);
-				glUseProgram(wireFrameShader.getId());
-				wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
-				wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-				wireFrameShader.loadUniform1f(0.5f, "greytone");
-				planet.getAtmosphere().getSphere().render(GL_LINES);
-				wireFrameShader.loadUniform1f(0.8f, "greytone");
-				planet.getAtmosphere().getSphere().render(GL_POINTS);
-				glDepthFunc(GL_LESS);
-			}
+		if(wireframe)
+		{
+			glDepthFunc(GL_LEQUAL);
+			glUseProgram(wireFrameShader.getId());
+			wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+			wireFrameShader.loadUniform1f(0.5f, "greytone");
+			planet.getAtmosphere().getSphere().render(GL_LINES);
+			wireFrameShader.loadUniform1f(0.8f, "greytone");
+			planet.getAtmosphere().getSphere().render(GL_POINTS);
+			glDepthFunc(GL_LESS);
 		}
+		
 	}
 	
 	private void drawPlanet() {
@@ -273,12 +263,14 @@ public class PlanetZoooom implements Game
 	private void drawWaterSurface()
 	{
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getWaterSurface().getModelMatrix(), modelViewMatrix);
+		Matrix4f.invert(modelViewMatrix, normalMatrix);
 		
 		glUseProgram(waterShader.getId());
 		waterShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 		waterShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		waterShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
-		waterShader.loadUniformVec3f(sun.getPosition(), "lightPosition");
+		waterShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+		waterShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
 		
 		switch(planet.getShaderMode()) {
 			case Planet.STYLE_EARTH:	waterShader.loadUniformVec3f(planet.getWaterSurface().BLUE, "waterColor");
@@ -291,8 +283,6 @@ public class PlanetZoooom implements Game
 			default: 					throw new IllegalArgumentException();
 		}
 		
-		waterShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
-
 		planet.getWaterSurface().getSphere().render(GL_TRIANGLES);
 
 		if(wireframe) {
@@ -511,7 +501,7 @@ public class PlanetZoooom implements Game
 		shader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 		shader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		shader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
-		shader.loadUniformVec3f(sun.getPosition(), "lightPosition");
+		shader.loadUniformVec3f(SUN_POSITION, "lightPosition");
 		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
 		shader.loadUniform1f(planet.getRadius(), "radius");
 		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");

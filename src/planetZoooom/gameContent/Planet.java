@@ -3,7 +3,7 @@ package planetZoooom.gameContent;
 import org.lwjgl.util.vector.Vector3f;
 
 import planetZoooom.geometry.DynamicSphere;
-import planetZoooom.interfaces.ICameraControl;
+import planetZoooom.interfaces.CameraControl;
 import planetZoooom.utils.CustomNoise;
 import planetZoooom.utils.Info;
 
@@ -15,7 +15,7 @@ public class Planet //implements GameObjectListener
 	private final static int MAX_OCTAVES = 10;
 	private final static float MIN_MOUNTAIN_HEIGHT = 0.0214f;
 	private final static int MIN_TRIANGLES = 5000;
-	final static float CAM_COLLISION_OFFSET = 200;
+	final static float CAM_COLLISION_OFFSET = 150;
 
 	private Vector3f position;
 
@@ -150,19 +150,19 @@ public class Planet //implements GameObjectListener
 	}
 
 	private void adjustCamSpeed(float camSphereDistance) {
-		ICameraControl camControl = Info.camera.getCameraControl();
+		CameraControl camControl = Info.camera.getCameraControl();
 		
 //		System.out.printf("%.2f / %.2f\n", slowDownRadius, camSphereDistance);
 		
 		if(camSphereDistance < slowDownRadius) {
-			float camSpeed = ICameraControl.MAX_CAM_SPEED / slowDownRadius * camSphereDistance;
+			float camSpeed = CameraControl.MAX_CAM_SPEED / slowDownRadius * camSphereDistance;
 			
-			if(camSpeed < ICameraControl.MIN_CAM_SPEED)
-				camSpeed = ICameraControl.MIN_CAM_SPEED;
+			if(camSpeed < CameraControl.MIN_CAM_SPEED)
+				camSpeed = CameraControl.MIN_CAM_SPEED;
 
 			camControl.setVelocity(camSpeed);
 		} else 
-			camControl.setVelocity(ICameraControl.MAX_CAM_SPEED);
+			camControl.setVelocity(CameraControl.MAX_CAM_SPEED);
 	}
 	
 	private void handleCollision(Vector3f planetToCam) 

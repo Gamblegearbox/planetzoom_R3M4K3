@@ -2,9 +2,9 @@ package planetZoooom.input;
 
 import static org.lwjgl.glfw.GLFW.*;
 import planetZoooom.gameContent.FirstPersonCamera;
-import planetZoooom.interfaces.ICameraControl;
+import planetZoooom.interfaces.CameraControl;
 
-public class FirstPersonCameraControl implements ICameraControl
+public class FirstPersonCameraControl implements CameraControl
 {
 	private FirstPersonCamera cam;
 	private float velocity = 0.01f;

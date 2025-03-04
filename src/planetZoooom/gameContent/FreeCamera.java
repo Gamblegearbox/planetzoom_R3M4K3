@@ -6,10 +6,10 @@ import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import planetZoooom.input.FreeCameraControl;
-import planetZoooom.interfaces.ICamera;
-import planetZoooom.interfaces.ICameraControl;
+import planetZoooom.interfaces.Camera;
+import planetZoooom.interfaces.CameraControl;
 
-public class FreeCamera implements ICamera
+public class FreeCamera implements Camera
 {
 	private Vector3f position;
 	private Quaternion orientation;
@@ -17,7 +17,7 @@ public class FreeCamera implements ICamera
 	private static final float MOUSE_SENSITIVITY = 1.0f;
 
 	private Matrix4f view;
-	private ICameraControl cameraControl;
+	private CameraControl cameraControl;
 	
 	public FreeCamera(Vector3f _position)
 	{
@@ -83,7 +83,7 @@ public class FreeCamera implements ICamera
 	}
 
 	@Override
-	public ICameraControl getCameraControl()
+	public CameraControl getCameraControl()
 	{
 		return cameraControl;
 	}

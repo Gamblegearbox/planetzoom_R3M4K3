@@ -4,10 +4,10 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import planetZoooom.input.FirstPersonCameraControl;
-import planetZoooom.interfaces.ICamera;
-import planetZoooom.interfaces.ICameraControl;
+import planetZoooom.interfaces.Camera;
+import planetZoooom.interfaces.CameraControl;
 
-public class FirstPersonCamera implements ICamera
+public class FirstPersonCamera implements Camera
 {
 	private Matrix4f viewMatrix;
 	private Vector3f position;
@@ -34,7 +34,7 @@ public class FirstPersonCamera implements ICamera
 	}
 	
 	@Override
-	public ICameraControl getCameraControl()
+	public CameraControl getCameraControl()
 	{
 		return new FirstPersonCameraControl(this);	
 	}
