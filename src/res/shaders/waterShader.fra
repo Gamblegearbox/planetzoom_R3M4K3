@@ -9,7 +9,6 @@ in DATA {
 	vec3 position;
 	vec3 normal;
 	vec2 uv;
-	vec3 viewDir;
 	vec3 lightDir;
 } pass_data;
 
@@ -24,14 +23,15 @@ void main(void) {
  
  	float ambient = 0.1;
 	float diffuse = max(dot(pass_data.normal,L), 0.0);
+	vec3 color = waterColor;
    	diffuse = clamp(diffuse, 0.0, 1.0);     
 
- 	float exponent = 4.0;
-	float lightSpecular = 1.0 * pow(max(dot(R,E),0.0),exponent);
+ 	float exponent = 16.0;
+	float lightSpecular = 1.0 * pow(max(dot(R,E),0.0), exponent);
 	lightSpecular = clamp(lightSpecular, 0.0, 1.0); 
-	float mul = 1.0;
-	
-	out_Color = vec4(waterColor + lightSpecular, 0.8);
-	out_Color.xyz *= (diffuse + ambient + lightSpecular);	
+	float dist = distance(vec2(0.5), pass_data.uv);
+	float rings = abs(sin(dist * 580.0));
 
+	out_Color = vec4(color + lightSpecular, 0.8);
+	out_Color.xyz *= (diffuse + ambient + lightSpecular);	
 }

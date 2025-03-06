@@ -16,8 +16,7 @@ public class BillBoard extends MeshObject
 		modelMatrix = new Matrix4f();
 		setPosition(position);
 		
-		vertices = new float[] 
-		{
+		vertices = new float[] {
 			-localSizeX, -localSizeY, 0,
 			-localSizeX,  localSizeY, 0,
 			localSizeX,  localSizeY, 0,

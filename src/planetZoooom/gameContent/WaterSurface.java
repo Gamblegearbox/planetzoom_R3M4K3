@@ -4,7 +4,6 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import planetZoooom.geometry.StaticSphere;
-import planetZoooom.graphics.ShaderProgram;
 
 
 public class WaterSurface 

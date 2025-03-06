@@ -19,11 +19,6 @@ public class Timer {
 		 lastFPStimestamp = getTime();
 	}
 	
-	//in case this method should be used it would be simpler to rename this to getTime() and the current getTime() to something else 
-	private long getTime2(){
-		return System.nanoTime() / 1_000_000;
-	}
-	
 	private long getTime(){
 		//glfwGetTime() returns time in seconds as a double value
 		return (long) (GLFW.glfwGetTime() * 1_000);
@@ -33,9 +28,11 @@ public class Timer {
 	 * can only be called once per frame (both zero and two calls would break this shit)
 	 * @return the time since the last frame in ms
 	 */
-	public int getDeltaTime() {
+	public float getDeltaTime() {
 	    long currentTime = getTime();
-	    int delta = (int) (currentTime - lastFrame);
+
+		float delta = (float)(currentTime - lastFrame) * 0.001f;
+
 	    updateFPS();
 	    updateExpectedFPS();
 	    lastFrame = currentTime;

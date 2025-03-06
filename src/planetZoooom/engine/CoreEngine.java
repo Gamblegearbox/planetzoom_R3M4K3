@@ -112,10 +112,8 @@ public class CoreEngine
     public void update()
     {
         glfwPollEvents();
-        
-        int deltaTime = timer.getDeltaTime();
    
-        game.update(deltaTime);
+        game.update(timer.getDeltaTime());
         
         if(Keyboard.isKeyPressed(GLFW_KEY_ESCAPE))
         	glfwSetWindowShouldClose(windowHandle, GL_TRUE);

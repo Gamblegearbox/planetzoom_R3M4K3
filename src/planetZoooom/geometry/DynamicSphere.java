@@ -35,8 +35,6 @@ public class DynamicSphere
 	private Vector3f orthoVec2 = new Vector3f();
 	
 	private float radius;
-	// private boolean hasWater = planet == null ? true : planet.getHasWater();
-	// private boolean wasWater;
 
 	private int positionPointer; 
 	private int triangleIndexCount;
@@ -126,36 +124,34 @@ public class DynamicSphere
 
 		//Lenz Edition
 		createNoise(pos);
-		// if(this.wasWater) {
-		// 	finalNormal = pos;
-		// }
-		// else {
-			orthoVec1.x = -pos.y;
-			orthoVec1.y = pos.x;
-			orthoVec1.z = 0;
-			
-			Vector3f.cross(orthoVec1, pos, orthoVec2);
-			orthoVec1.normalise(orthoVec1);
-			orthoVec2.normalise(orthoVec2);
-			orthoVec1.scale(0.1f);
-			orthoVec2.scale(0.1f);
-			float orthoLength1 = orthoVec1.length();
-			float orthoLength2 = orthoVec2.length();
-			Vector3f.add(orthoVec1, pos, orthoVec1);
-			Vector3f.add(orthoVec2, pos, orthoVec2);
-			orthoVec1.normalise(orthoVec1);
-			orthoVec2.normalise(orthoVec2);
-			orthoVec1.scale(6500.0f);
-			orthoVec2.scale(6500.0f);
-			createNoise(orthoVec1);
-			createNoise(orthoVec2);
-			Vector3f.sub(orthoVec1, pos, orthoVec1);
-			Vector3f.sub(orthoVec2, pos, orthoVec2);
-			orthoVec1.scale(1/orthoLength1);
-			orthoVec2.scale(1/orthoLength2);
-			Vector3f.cross(orthoVec2, orthoVec1, finalNormal);
-		// }
+				
+		orthoVec1.x = -pos.y;
+		orthoVec1.y = pos.x;
+		orthoVec1.z = 0;
 		
+		Vector3f.cross(orthoVec1, pos, orthoVec2);
+		orthoVec1.normalise(orthoVec1);
+		orthoVec2.normalise(orthoVec2);
+		orthoVec1.scale(0.1f);
+		orthoVec2.scale(0.1f);
+		float orthoLength1 = orthoVec1.length();
+		float orthoLength2 = orthoVec2.length();
+		Vector3f.add(orthoVec1, pos, orthoVec1);
+		Vector3f.add(orthoVec2, pos, orthoVec2);
+		orthoVec1.normalise(orthoVec1);
+		orthoVec2.normalise(orthoVec2);
+		orthoVec1.scale(6500.0f);
+		orthoVec2.scale(6500.0f);
+		createNoise(orthoVec1);
+		createNoise(orthoVec2);
+		Vector3f.sub(orthoVec1, pos, orthoVec1);
+		Vector3f.sub(orthoVec2, pos, orthoVec2);
+		orthoVec1.scale(1/orthoLength1);
+		orthoVec2.scale(1/orthoLength2);
+		Vector3f.cross(orthoVec2, orthoVec1, finalNormal);
+		
+		finalNormal = pos;
+
 		this.normals[positionPointer] = finalNormal.x;
 		this.positions[positionPointer++] = pos.x;
 		this.normals[positionPointer] = finalNormal.y;
@@ -425,18 +421,9 @@ public class DynamicSphere
 		double amplitude = planet.getAmplitude();
 		
 		float noise = (float) CustomNoise.perlinNoise(v.x + noiseSeed, v.y + noiseSeed, v.z + noiseSeed, octaves, lambda, amplitude);
-		//this.wasWater = false;
-		
-		// if(hasWater) {
-		// 	if (noise < 0)
-		// 	{
-		// 		noise = 0;
-		// 		this.wasWater = true;
-		// 	}
-		// }
 
 		// 0.14 % = 8 km von 6000 km
-		v.scale(1 + noise * planet.getMountainHeight());
+		v.scale(1.0f + noise * planet.getMountainHeight());
 	}
 	
 	public class SphereVertexArray {

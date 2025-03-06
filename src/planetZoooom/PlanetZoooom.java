@@ -13,10 +13,9 @@ import planetZoooom.gameContent.BillBoard;
 import planetZoooom.gameContent.FreeCamera;
 import planetZoooom.gameContent.HeadsUpDisplay;
 import planetZoooom.gameContent.Planet;
+import planetZoooom.gameContent.WaterSurface;
 import planetZoooom.graphics.ShaderProgram;
-import planetZoooom.graphics.Texture;
 import planetZoooom.input.Keyboard;
-import planetZoooom.interfaces.CameraControl;
 import planetZoooom.interfaces.Game;
 import planetZoooom.utils.GameUtils;
 import planetZoooom.utils.Info;
@@ -25,18 +24,12 @@ import planetZoooom.utils.MatrixUtils;
 public class PlanetZoooom implements Game 
 {
 	private static CoreEngine coreEngine;
-	private CameraControl cameraControl;
 	private float fovParam = 45.0f;
 
 	// GAMEOBJECTS
 	private Planet planet;
 	private HeadsUpDisplay hud;
 	private BillBoard sun;
-	private BillBoard sunGlow;
-
-	// TEXTURES
-	private Texture sunTexture;
-	private Texture sunGlowTexture;
 
 	// SHADERS
 	private ShaderProgram earthShader;
@@ -70,13 +63,14 @@ public class PlanetZoooom implements Game
 	private static final float[] HUD_BG_GREY = new float[] {0.6f, 0.6f, 0.6f, 0.9f};
 	private static final float[] HUD_BG_PURPLE = new float[] {0.73f, 0.47f, 0.8f, 0.9f};
 
-	private static final Vector3f SUN_POSITION = new Vector3f(-2000000.0f, 0.0f, 0.0f);
+	private static final Vector3f SUN_POSITION = new Vector3f(-500.0f, 0.0f, 0.0f);
+	private static final Vector3f CAM_START_POSITION = new Vector3f(0.0f, 0.0f, 200.0f);
 
+	private float time = 0;
 	
 	private int hudMode;
 	
-	public static void main(String[] args) 
-	{
+	public static void main(String[] args) {
 		coreEngine = new CoreEngine(new PlanetZoooom());
 		coreEngine.start();
 	}
@@ -85,7 +79,7 @@ public class PlanetZoooom implements Game
 	public void init() {
 		printVersionInfo();
 
-		Info.camera = new FreeCamera(new Vector3f(0.0f,0.0f,20000.0f));
+		Info.camera = new FreeCamera(new Vector3f(CAM_START_POSITION.x, CAM_START_POSITION.y, CAM_START_POSITION.z));
 		Info.projectionMatrix = planetZoooom.utils.MatrixUtils.perspectiveProjectionMatrix(fovParam, coreEngine.getWindowWidth(), coreEngine.getWindowHeight());
 		
 		modelViewMatrix = new Matrix4f();
@@ -94,7 +88,6 @@ public class PlanetZoooom implements Game
 		lightDirection = new Vector3f();
 		
 		initOpenGL();
-		initTextures();
 		initShaders();
 		initGameObjects();
 
@@ -112,11 +105,6 @@ public class PlanetZoooom implements Game
         glPointSize(2.5f);
 	}
 	
-	private void initTextures() {
-		sunTexture = new Texture("src/res/textures/sun.png");
-		sunGlowTexture = new Texture("src/res/textures/sunGlow3.png");
-	}
-
 	private void initShaders() {
 		hudShader = new ShaderProgram("HUDShader");
 		earthShader = new ShaderProgram("earthShader");
@@ -127,21 +115,19 @@ public class PlanetZoooom implements Game
 		wireFrameShader = new ShaderProgram("wireFrameShader");
 		sunShader = new ShaderProgram("sunShader");
 		atmosphereShader = new ShaderProgram("atmosphereShader");
-		colorShader = new ShaderProgram("testShader");
+		colorShader = new ShaderProgram("colorShader");
 	}
 
 	private void initGameObjects() {
-		planet = new Planet(6500.0f, new Vector3f(0f, 0f, 0f));
+		planet = new Planet(100.0f, new Vector3f(0f, 0f, 0f));
 		hud = new HeadsUpDisplay(10, 10, "arial_nm.png", HUD_BG_WHITE);
-		sun = new BillBoard(new Vector3f(SUN_POSITION.x / 100f, SUN_POSITION.y, SUN_POSITION.z), 20000.0f, 20000.0f);
-		sun.setTexture(sunTexture);
-		sunGlow = new BillBoard(new Vector3f(SUN_POSITION.x / 100f, SUN_POSITION.y, SUN_POSITION.z), 30000.0f, 20000.0f);
-		sunGlow.setTexture(sunGlowTexture);
+		sun = new BillBoard(SUN_POSITION, 100.0f, 100.0f);
 	}
 
 	@Override
-	public void update(int deltaTime) 
-	{
+	public void update(float deltaTime) {
+		time += deltaTime;
+
 		this.processKeyboardInputs(deltaTime);
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //DO NOT MOVE THIS LINE! ....THERE IS A REASON THAT IT IS NOT IN RENDERER;
@@ -149,8 +135,7 @@ public class PlanetZoooom implements Game
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
 
-		if(!freezeUpdate) 
-		{
+		if(!freezeUpdate) {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			
 			drawSun();		
@@ -160,8 +145,7 @@ public class PlanetZoooom implements Game
 			drawAtmosphere();
 			glFrontFace(GL_CCW);
 		}
-		else 
-		{
+		else {
 			glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 		}
 		glEnable(GL_DEPTH_TEST);
@@ -182,12 +166,9 @@ public class PlanetZoooom implements Game
 		glUseProgram(sunShader.getId());
 		sunShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 		sunShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-		sunShader.loadUniformVec3f(sun.getPosition(), "billboardCenter");
-		sunShader.loadUniformVec3f(Info.camera.getLocalUpVector(), "cameraUp");
-		sunShader.loadUniformVec3f(Info.camera.getLocalRightVector(), "cameraRight");	
+		sunShader.loadUniform1f(time, "time");
+
 		sun.render(GL_TRIANGLES);
-		sunGlow.render(GL_TRIANGLES);
-		
 	}
 	
 	private void drawAtmosphere() {
@@ -229,22 +210,32 @@ public class PlanetZoooom implements Game
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getPlanetSurface().getModelMatrix(), modelViewMatrix);
 		Matrix4f.invert(modelViewMatrix, normalMatrix);
 		
+		ShaderProgram shader;
 		switch(planet.getShaderMode()) {
-			case Planet.STYLE_EARTH:	loadPlanetShaderUniforms(earthShader);
+			case Planet.STYLE_EARTH:	shader = earthShader;
 										planet.setHasWater(true);
 										break;
-			case Planet.STYLE_MARS:		loadPlanetShaderUniforms(marsShader);
+			case Planet.STYLE_MARS:		shader = marsShader;
 										planet.setHasWater(false);
 										break;
-			case Planet.STYLE_DUNE: 	loadPlanetShaderUniforms(dessertShader);
+			case Planet.STYLE_DUNE: 	shader = dessertShader;
 										planet.setHasWater(false);
 										break;
-			case Planet.STYLE_UNICOLOR: loadPlanetShaderUniforms(uniColorPlanetShader);
+			case Planet.STYLE_UNICOLOR: shader = uniColorPlanetShader;
 										planet.setHasWater(true);
 										break;
 			default: 					throw new IllegalArgumentException();
 		}
 		
+		glUseProgram(shader.getId());
+		shader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		shader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
+		shader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
+		shader.loadUniformVec3f(SUN_POSITION, "lightPosition");
+		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+		shader.loadUniform1f(planet.getRadius(), "radius");
+		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
+
 		planet.getPlanetSurface().render(GL_TRIANGLES);
 		
 		if(wireframe) {
@@ -260,24 +251,21 @@ public class PlanetZoooom implements Game
 		}
 	}
 	
-	private void drawWaterSurface()
-	{
+	private void drawWaterSurface() {
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getWaterSurface().getModelMatrix(), modelViewMatrix);
 		Matrix4f.invert(modelViewMatrix, normalMatrix);
-		
+
 		glUseProgram(waterShader.getId());
 		waterShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 		waterShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		waterShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
-		waterShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
 		waterShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
-		
 		switch(planet.getShaderMode()) {
-			case Planet.STYLE_EARTH:	waterShader.loadUniformVec3f(planet.getWaterSurface().BLUE, "waterColor");
-			case Planet.STYLE_DUNE: 	waterShader.loadUniformVec3f(planet.getWaterSurface().BLUE, "waterColor");		
+			case Planet.STYLE_EARTH:	waterShader.loadUniformVec3f(WaterSurface.BLUE, "waterColor");
+			case Planet.STYLE_DUNE: 	waterShader.loadUniformVec3f(WaterSurface.BLUE, "waterColor");		
 										break;
-			case Planet.STYLE_MARS:		waterShader.loadUniformVec3f(planet.getWaterSurface().RED, "waterColor");
-			case Planet.STYLE_UNICOLOR: waterShader.loadUniformVec3f(planet.getWaterSurface().RED, "waterColor");
+			case Planet.STYLE_MARS:		waterShader.loadUniformVec3f(WaterSurface.RED, "waterColor");
+			case Planet.STYLE_UNICOLOR: waterShader.loadUniformVec3f(WaterSurface.RED, "waterColor");
 										break;
 	
 			default: 					throw new IllegalArgumentException();
@@ -317,16 +305,12 @@ public class PlanetZoooom implements Game
 	}
 	
 	private void updateHud(int mode) {
-		switch(mode)
-		{
-			case HUD_MODE_OFF:
-			{
+		switch(mode) {
+			case HUD_MODE_OFF: {
 				hud.update("");
 				return;
 			}
-		
-			case HUD_MODE_INFO:
-			{
+			case HUD_MODE_INFO: {
 				if(freezeUpdate)
 					hud.setBackgroundColor(HUD_BG_GREY);
 				else
@@ -334,16 +318,12 @@ public class PlanetZoooom implements Game
 				hud.update(getInfoHUDText());
 				return;
 			}
-			
-			case HUD_MODE_NOISE:
-			{
+			case HUD_MODE_NOISE: {
 				hud.setBackgroundColor(HUD_BG_YELLOW);
 				hud.update(getNoiseHUDText());
 				return;
 			}
-			
-			case HUD_MODE_ATMOSPHERE:
-			{
+			case HUD_MODE_ATMOSPHERE: {
 				hud.setBackgroundColor(HUD_BG_PURPLE);
 				hud.update(getAtmosphereHUDText());
 				return;
@@ -415,16 +395,15 @@ public class PlanetZoooom implements Game
 	private void reset() {
 		planet.setNoiseSeed(0);
 		planet.resetPlanet();
-		Info.camera = new FreeCamera(new Vector3f(0.0f,0.0f,20000.0f));
+		Info.camera = new FreeCamera(new Vector3f(CAM_START_POSITION.x, CAM_START_POSITION.y, CAM_START_POSITION.z));
 		planet.setShaderMode(0);
 		wireframe = false;
 		freezeUpdate = false;
 	}
 	
-	private void processKeyboardInputs(int deltaTime) {
+	private void processKeyboardInputs(float deltaTime) {
 		
-		cameraControl = Info.camera.getCameraControl();
-		Info.camera = cameraControl.handleInput(deltaTime);
+		Info.camera.handleInput(deltaTime);
 		
 		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_5)){ wireframe = !wireframe; }
 		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_9)){ freezeUpdate = !freezeUpdate; }
@@ -433,10 +412,8 @@ public class PlanetZoooom implements Game
 		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_ENTER)){ planet.setNoiseSeed((float) (Math.random() * Integer.MAX_VALUE)); }
 		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_BACKSPACE)){ reset(); }
 		
-		switch(hudMode)
-		{
-			case HUD_MODE_NOISE:
-			{
+		switch(hudMode) {
+			case HUD_MODE_NOISE: {
 				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_O))
 					planet.setAmplitude(planet.getAmplitude() + 0.02f);
 				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_L))
@@ -463,8 +440,7 @@ public class PlanetZoooom implements Game
 					planet.setMountainHeight(planet.getMountainHeight() - 0.0005f);
 				break;
 			}
-			case HUD_MODE_ATMOSPHERE:
-			{
+			case HUD_MODE_ATMOSPHERE: {
 				Atmosphere atmosphere = planet.getAtmosphere();
 				
 				if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_T))
@@ -494,16 +470,5 @@ public class PlanetZoooom implements Game
 				break;
 			}
 		}
-	}
-
-	private void loadPlanetShaderUniforms(ShaderProgram shader) {
-		glUseProgram(shader.getId());
-		shader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
-		shader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
-		shader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
-		shader.loadUniformVec3f(SUN_POSITION, "lightPosition");
-		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
-		shader.loadUniform1f(planet.getRadius(), "radius");
-		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
 	}
 }

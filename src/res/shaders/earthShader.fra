@@ -5,8 +5,7 @@
 #pragma debug(on)
 #pragma optimize(off)
 
-in DATA
-{
+in DATA {
 	vec3 position;
 	vec3 normal;
 	vec2 uv;
@@ -20,19 +19,17 @@ uniform float radius;
 
 out vec4 out_Color;
 
-void singleColor(float value)
-{
+void singleColor(float value) {
 	out_Color = vec4(value, value, value, 1.0);
 }
 
-void finalColor(vec4 color, float diffuse, float ambient)
-{
+void finalColor(vec4 color, float diffuse, float ambient) {
 	out_Color = color;
 	out_Color.xyz *= (diffuse + ambient);
+	//out_Color = vec4(pass_data.normal, 1.0);
 }
 
-void main(void)
-{	
+void main(void) {	
 	vec4 heightColor;
 	
 	float height = length(pass_data.positionVector) - radius;
@@ -96,6 +93,5 @@ void main(void)
 	{
 		finalColor(heightColor, lightDiffuse, ambient)
 	}*/
-	
 	
 }

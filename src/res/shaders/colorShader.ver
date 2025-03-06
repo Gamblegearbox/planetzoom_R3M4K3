@@ -14,9 +14,7 @@ uniform mat4 normalMatrix;
 
 out vec4 pass_color;
 
-void main(void)
-
-{
+void main(void) {
 	pass_color = color;		
 	gl_Position = (projectionMatrix * modelViewMatrix) * vec4((position), 1.0);	
 }

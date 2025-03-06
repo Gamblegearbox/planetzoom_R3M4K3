@@ -8,7 +8,7 @@ public class MatrixUtils
 	{
 		Matrix4f result = new Matrix4f();
 		float fov = fovParam;
-		float zFar = 90000.0f;
+		float zFar = 1000.0f;
 		float zNear = 1f;
 		float aspectRatio = (float) width/height;		
 		float frustumLength = zFar - zNear;

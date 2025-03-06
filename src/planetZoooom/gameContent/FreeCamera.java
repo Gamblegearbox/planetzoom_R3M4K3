@@ -4,33 +4,42 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Quaternion;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
+import static org.lwjgl.glfw.GLFW.*;
 
-import planetZoooom.input.FreeCameraControl;
+import planetZoooom.input.Cursor;
+import planetZoooom.input.Keyboard;
 import planetZoooom.interfaces.Camera;
-import planetZoooom.interfaces.CameraControl;
+
 
 public class FreeCamera implements Camera
 {
 	private Vector3f position;
 	private Quaternion orientation;
 	private boolean invertedYAxis;
+
 	private static final float MOUSE_SENSITIVITY = 1.0f;
+	private static final float CAM_BOOST_FACTOR = 1.5f;
+	public static final float MIN_CAM_SPEED = 5.0f;
+	public static final float MAX_CAM_SPEED = 50.0f;
+	public static final float MAX_CAM_RANGE = 500.0f;
 
 	private Matrix4f view;
-	private CameraControl cameraControl;
 	
-	public FreeCamera(Vector3f _position)
-	{
+	//private FreeCamera cam;
+	private float velocity = MAX_CAM_SPEED;
+	private final static float rollSpeed = 0.025f * MAX_CAM_SPEED;
+	private boolean boostEnabled;
+
+	public FreeCamera(Vector3f _position) {
 		position = _position;
 
 		orientation = new Quaternion();
 		view = new Matrix4f();
 		
-		cameraControl = new FreeCameraControl(this);
+		//cameraControl = new FreeCameraControl(this);
 	}
 	
-	public void rotate(Vector3f axis, float theta)
-	{
+	public void rotate(Vector3f axis, float theta) {
 		Quaternion r = new Quaternion();
 		
 		r.x = (float) (axis.x * Math.sin(theta / 2.0f));
@@ -81,18 +90,10 @@ public class FreeCamera implements Camera
 
 		return matrix;
 	}
-
-	@Override
-	public CameraControl getCameraControl()
-	{
-		return cameraControl;
-	}
 	
-	public Vector3f getPosition()
-	{
+	public Vector3f getPosition() {
 		return position;
 	}
-	
 	
 	public void addYaw(float amount)
 	{
@@ -137,13 +138,13 @@ public class FreeCamera implements Camera
 		return lookAt;
 	}
 	
-	public void moveForwards(float amount)
+	public void moveForward(float amount)
 	{			
 		Vector3f movement = calculateMovementVector(new Vector3f(0, 0, -amount));
 		Vector3f.add(position, movement, position);
 	}
 	
-	public void moveBackwards(float amount)
+	public void moveBackward(float amount)
 	{
 		Vector3f movement = calculateMovementVector(new Vector3f(0, 0, amount));
 		Vector3f.add(position, movement, position);
@@ -217,5 +218,45 @@ public class FreeCamera implements Camera
 	public void setPosition(Vector3f position) 
 	{
 		this.position = position;
+	}
+
+	@Override
+	public void handleInput(float deltaTime) {
+		boostEnabled = Keyboard.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
+
+		if(boostEnabled)
+			velocity *= CAM_BOOST_FACTOR;
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_W))
+			moveForward(velocity * deltaTime);
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_S))
+			moveBackward(velocity * deltaTime);
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_A))
+			strafeLeft(velocity * deltaTime);
+
+		if(Keyboard.isKeyPressed(GLFW_KEY_D))
+			strafeRight(velocity * deltaTime);
+			
+		if(Keyboard.isKeyPressed(GLFW_KEY_SPACE))
+			moveUp(velocity * deltaTime);
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_LEFT_CONTROL))
+			moveDown(velocity * deltaTime);
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_Q))
+			addRoll(-rollSpeed * deltaTime);
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_E))
+			addRoll(rollSpeed * deltaTime);
+		
+		addYaw((float) Cursor.getDx() / 250.0f);
+		addPitch((float) Cursor.getDy() / 250.0f);
+	}
+
+	@Override
+	public void setVelocity(float velocity) {
+		this.velocity = velocity;
 	}
 }
