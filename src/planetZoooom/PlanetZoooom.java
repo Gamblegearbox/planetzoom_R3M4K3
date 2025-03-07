@@ -100,6 +100,7 @@ public class PlanetZoooom implements Game
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_LINE_SMOOTH);
         glEnable(GL_POINT_SMOOTH);
         glPointSize(2.5f);
@@ -132,30 +133,26 @@ public class PlanetZoooom implements Game
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //DO NOT MOVE THIS LINE! ....THERE IS A REASON THAT IT IS NOT IN RENDERER;
 		
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-
-		if(!freezeUpdate) {
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			
-			drawSun();		
-			planet.update();
-		
-			glFrontFace(GL_CW);
-			drawAtmosphere();
-			glFrontFace(GL_CCW);
-		}
-		else {
+		if(freezeUpdate) {
 			glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 		}
-		glEnable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+		else {
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			planet.update();
+		}
+		
+		// TODO: sort before rendering to make transparency working
+		drawSun();	
 		drawPlanet();
 		if(planet.getHasWater()) {
 			drawWaterSurface();
 		}
 
+		glFrontFace(GL_CW);
+		drawAtmosphere();
+		glFrontFace(GL_CCW);
+
+		// HUD
 		updateHud(hudMode);
 		drawHUD();
 	}
@@ -208,7 +205,7 @@ public class PlanetZoooom implements Game
 	
 	private void drawPlanet() {
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getPlanetSurface().getModelMatrix(), modelViewMatrix);
-		Matrix4f.invert(modelViewMatrix, normalMatrix);
+		Matrix4f.invert(planet.getPlanetSurface().getModelMatrix(), normalMatrix);
 		
 		ShaderProgram shader;
 		switch(planet.getShaderMode()) {
@@ -253,13 +250,15 @@ public class PlanetZoooom implements Game
 	
 	private void drawWaterSurface() {
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getWaterSurface().getModelMatrix(), modelViewMatrix);
-		Matrix4f.invert(modelViewMatrix, normalMatrix);
+		Matrix4f.invert(planet.getWaterSurface().getModelMatrix(), normalMatrix);
 
 		glUseProgram(waterShader.getId());
 		waterShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
 		waterShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		waterShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
 		waterShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
+		waterShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+
 		switch(planet.getShaderMode()) {
 			case Planet.STYLE_EARTH:	waterShader.loadUniformVec3f(WaterSurface.BLUE, "waterColor");
 			case Planet.STYLE_DUNE: 	waterShader.loadUniformVec3f(WaterSurface.BLUE, "waterColor");		

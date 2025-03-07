@@ -9,29 +9,25 @@ in DATA {
 	vec3 position;
 	vec3 normal;
 	vec2 uv;
-	vec3 lightDir;
 } pass_data;
 
 uniform vec3 waterColor;
+uniform vec3 lightPosition;
+uniform vec3 cameraPosition;
 
 out vec4 out_Color;
 
 void main(void) {	
- 	vec3 L = normalize(pass_data.lightDir);   
-	vec3 E = normalize(-pass_data.position);  
-	vec3 R = normalize(-reflect(L,pass_data.normal));  
- 
- 	float ambient = 0.1;
-	float diffuse = max(dot(pass_data.normal,L), 0.0);
-	vec3 color = waterColor;
-   	diffuse = clamp(diffuse, 0.0, 1.0);     
+ 	float ambient = 0.3;
+	vec3 normal = normalize(pass_data.normal);
+	vec3 lightDir = normalize(lightPosition - pass_data.position);
+	float diffuse = max(dot(normal, lightDir), 0.0);
+	float specularStrength = 0.8;
+	vec3 viewDir = normalize(cameraPosition - pass_data.position);
+	vec3 reflectDir = reflect(-lightDir, normal);
+	float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32) * specularStrength;
 
- 	float exponent = 16.0;
-	float lightSpecular = 1.0 * pow(max(dot(R,E),0.0), exponent);
-	lightSpecular = clamp(lightSpecular, 0.0, 1.0); 
-	float dist = distance(vec2(0.5), pass_data.uv);
-	float rings = abs(sin(dist * 580.0));
+	float lightResult = ambient + diffuse;
 
-	out_Color = vec4(color + lightSpecular, 0.8);
-	out_Color.xyz *= (diffuse + ambient + lightSpecular);	
+	out_Color = vec4(0.2, 0.7, 1.0, 0.8) * lightResult + specular;
 }

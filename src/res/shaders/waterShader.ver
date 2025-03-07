@@ -11,22 +11,16 @@ out DATA {
 	vec3 position;
 	vec3 normal;
 	vec2 uv;
-	vec3 lightDir;
 } pass_data;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 normalMatrix;
-uniform vec3 cameraPosition;
-uniform vec3 lightPosition;
 
 void main(void) {
-	pass_data.position = vec3(modelViewMatrix * vec4(position, 1.0));
-	pass_data.normal = normalize(vec3(normalMatrix * vec4(normal, 1.0)));
-	
+	pass_data.position = position;
+	pass_data.normal = mat3(normalMatrix) * normal;
 	pass_data.uv = uvCoords;
-
-	pass_data.lightDir = vec3(modelViewMatrix * vec4(lightPosition, 1.0));
 
 	gl_Position = (projectionMatrix * modelViewMatrix) * vec4(position, 1.0);
 }

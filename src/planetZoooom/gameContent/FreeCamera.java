@@ -18,7 +18,7 @@ public class FreeCamera implements Camera
 	private boolean invertedYAxis;
 
 	private static final float MOUSE_SENSITIVITY = 1.0f;
-	private static final float CAM_BOOST_FACTOR = 1.5f;
+	private static final float CAM_BOOST_FACTOR = 2.5f;
 	public static final float MIN_CAM_SPEED = 5.0f;
 	public static final float MAX_CAM_SPEED = 50.0f;
 	public static final float MAX_CAM_RANGE = 500.0f;

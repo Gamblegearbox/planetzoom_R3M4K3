@@ -9,13 +9,12 @@ in DATA {
 	vec3 position;
 	vec3 normal;
 	vec2 uv;
-	vec3 positionVector;
-	vec3 viewDir;
-	vec3 lightDir;
-	float mountainHeight;
 } pass_data;
 
 uniform float radius;
+uniform vec3 cameraPosition;
+uniform vec3 lightPosition;
+uniform float mountainHeight;
 
 out vec4 out_Color;
 
@@ -23,39 +22,27 @@ void singleColor(float value) {
 	out_Color = vec4(value, value, value, 1.0);
 }
 
-void finalColor(vec4 color, float diffuse, float ambient) {
-	out_Color = color;
-	out_Color.xyz *= (diffuse + ambient);
-	//out_Color = vec4(pass_data.normal, 1.0);
-}
 
 void main(void) {	
 	vec4 heightColor;
 	
-	float height = length(pass_data.positionVector) - radius;
-	float maxHeight = radius * pass_data.mountainHeight;
+	float height = length(pass_data.position) - radius;
+	float maxHeight = radius * mountainHeight;
 
 	float heightGradientValue = height / maxHeight;
  
- 	vec3 L = normalize(pass_data.lightDir);   
-	vec3 E = normalize(-pass_data.position);  
-	vec3 R = normalize(-reflect(L,pass_data.normal));  
- 
- 	float ambient = 0.1;
-	float diffuse = max(dot(pass_data.normal,L), 0.0);
-   	diffuse = clamp(diffuse, 0.0, 1.0);     
+ 	float ambient = 0.3;
+	vec3 normal = normalize(pass_data.normal);
+	vec3 lightDir = normalize(lightPosition - pass_data.position);
+	float diffuse = max(dot(normal, lightDir), 0.0);
 
- 	float exponent = 4.0;
-	float lightSpecular = 1.0 * pow(max(dot(R,E),0.0),exponent);
-	lightSpecular = clamp(lightSpecular, 0.0, 1.0); 
-	float mul = 1.0;
-	
 	//ColorBorders
 	float snow = 0.94;
 	float stone = 0.7;
 	float grass = 0.06;
 	float sand = 0.04;
-	
+	float mul = 1.0;
+
 	if(heightGradientValue > snow){
 		mul = heightGradientValue;
 		heightColor = vec4(0.87 * mul, 0.90 * mul, 0.89 * mul, 1.0);
@@ -72,8 +59,11 @@ void main(void) {
 		mul = heightGradientValue + 1 - sand;
 		heightColor = vec4(0.89 * mul, 0.78 * mul, 0.41 * mul, 1.0);
 	}
+
+	float lightResult = ambient + diffuse;
+
+	out_Color = (diffuse + ambient) * heightColor;
 	
-	finalColor(heightColor, diffuse, ambient);
 	
 	/*HEIGHTLINES
 	if(	(heightGradientValue > sand && heightGradientValue < sand + 0.001) 	 || 
