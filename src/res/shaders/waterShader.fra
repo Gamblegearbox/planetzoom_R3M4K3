@@ -14,11 +14,12 @@ in DATA {
 uniform vec3 waterColor;
 uniform vec3 lightPosition;
 uniform vec3 cameraPosition;
+uniform float ambientLight;
 
 out vec4 out_Color;
 
 void main(void) {	
- 	float ambient = 0.3;
+ 	float ambient = ambientLight;
 	vec3 normal = normalize(pass_data.normal);
 	vec3 lightDir = normalize(lightPosition - pass_data.position);
 	float diffuse = max(dot(normal, lightDir), 0.0);
@@ -27,7 +28,7 @@ void main(void) {
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32) * specularStrength;
 
-	float lightResult = ambient + diffuse;
-
-	out_Color = vec4(0.2, 0.7, 1.0, 0.8) * lightResult + specular;
+	vec3 lightResult = waterColor * (ambient + diffuse);
+	
+	out_Color = vec4(lightResult, 0.8) + specular;
 }

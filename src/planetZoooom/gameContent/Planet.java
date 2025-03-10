@@ -1,10 +1,9 @@
 package planetZoooom.gameContent;
 
+import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import planetZoooom.geometry.DynamicSphere;
-import planetZoooom.utils.CustomNoise;
-import planetZoooom.utils.Info;
 
 public class Planet //implements GameObjectListener
 {
@@ -14,7 +13,6 @@ public class Planet //implements GameObjectListener
 	private final static int MAX_OCTAVES = 10;
 	private final static float MIN_MOUNTAIN_HEIGHT = 0.0214f;
 	private final static int MIN_TRIANGLES = 5000;
-	final static float CAM_COLLISION_OFFSET = 2;
 
 	private Vector3f position;
 
@@ -27,7 +25,7 @@ public class Planet //implements GameObjectListener
 	private float lambdaBaseFactor;
 	private float noiseSeed;
 	private float mountainHeight;	
-	private final float slowDownRadius;
+	
 	private int shaderMode = 0;
 	private boolean hasWater;
 	
@@ -36,18 +34,15 @@ public class Planet //implements GameObjectListener
 	public static final int STYLE_DUNE = 2;
 	public static final int STYLE_UNICOLOR = 3;
 	
-	public Planet(float radius, Vector3f position)
+	public Planet(float radius, Vector3f position, Matrix4f modelViewMatrix)
 	{
 		this.position = position;
-		this.planetSurface = new DynamicSphere(radius, MIN_TRIANGLES, this);
+		this.planetSurface = new DynamicSphere(radius, MIN_TRIANGLES, this, modelViewMatrix);
 		this.atmosphere = new Atmosphere(this);
 		this.waterSurface = new WaterSurface(this);
 
 		//sphere.addListener(this);
-
 		resetPlanet();
-		
-		slowDownRadius = getRadius() * 1.15f;
 	}
 
 	public void resetPlanet() {
@@ -58,16 +53,8 @@ public class Planet //implements GameObjectListener
 		mountainHeight = MIN_MOUNTAIN_HEIGHT;
 	}
 
-	public void update() {
-		planetSurface.update();
-
-		Vector3f planetToCam = new Vector3f();
-		Vector3f.sub(Info.camera.getPosition(), getPosition(), planetToCam);
-		
-		float camSphereDistance = planetToCam.length() - getRadius();
-		adjustCamSpeed(camSphereDistance);
-
-		handleCollision(planetToCam);
+	public void update(Matrix4f modelViewMatrix) {
+		planetSurface.update(modelViewMatrix);
 	}
 	
 	public void setHasWater(boolean water) {
@@ -148,49 +135,6 @@ public class Planet //implements GameObjectListener
 			this.mountainHeight = mountainHeight;
 	}
 
-	//TODO: put that into camera or game
-	private void adjustCamSpeed(float camSphereDistance) {
-		
-//		System.out.printf("%.2f / %.2f\n", slowDownRadius, camSphereDistance);
-		
-		if(camSphereDistance < slowDownRadius) {
-			float camSpeed = FreeCamera.MAX_CAM_SPEED / slowDownRadius * camSphereDistance;
-			
-			if(camSpeed < FreeCamera.MIN_CAM_SPEED)
-				camSpeed = FreeCamera.MIN_CAM_SPEED;
-
-				Info.camera.setVelocity(camSpeed);
-		} 
-		else {
-			Info.camera.setVelocity(FreeCamera.MAX_CAM_SPEED);
-		}
-	}
-	
-	private void handleCollision(Vector3f planetToCam) 
-	{
-		Vector3f cam = Info.camera.getPosition();
-
-		float actualCamDistance = planetToCam.length();
-		planetToCam.normalise().scale(this.getRadius());
-
-		double noise = CustomNoise.perlinNoise(planetToCam.x + noiseSeed, planetToCam.y + noiseSeed, planetToCam.z + noiseSeed, octaves, getLambda(getRadius()), amplitude);
-
-		if (noise < 0)
-			noise = 0;
-
-		noise *= mountainHeight * getRadius();
-
-		float minCamDistance = (float) (getRadius() + noise);
-
-		if (actualCamDistance < minCamDistance + CAM_COLLISION_OFFSET)
-		{
-			planetToCam.normalise();
-			planetToCam.scale(-(actualCamDistance - minCamDistance) + CAM_COLLISION_OFFSET);
-
-			Vector3f.add(cam, planetToCam, cam);
-		}
-	}
-
 	public float getRadius()
 	{
 		return planetSurface.getRadius();
@@ -225,7 +169,7 @@ public class Planet //implements GameObjectListener
 		return planetSurface;
 	}
 
-	private float getLambda(float planetRadius)
+	public float getLambda(float planetRadius)
 	{
 		return lambdaBaseFactor * planetRadius;
 	}

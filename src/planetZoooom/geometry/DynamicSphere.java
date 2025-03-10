@@ -9,23 +9,21 @@ import java.nio.IntBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+
+import planetZoooom.engine.MeshObject;
+import planetZoooom.engine.VertexArray;
 import planetZoooom.gameContent.Planet;
 import planetZoooom.utils.CustomNoise;
 import planetZoooom.utils.Info;
 
-public class DynamicSphere
+public class DynamicSphere extends MeshObject
 {
 	private static final int FIRST_CHECK = 3;
 	private static final double VIEW_FRUSTUM_OFFSET = 1.5;
 	private static final float VIEW_FRUSTUM_CHECK_OFFSET = 0.01f;
 	private static final float ANGLE_TOLERANCE = (float) Math.cos((90 + 40) * Math.PI / 180);	// NEW Angle tolerance, belongs to isFacingTowardsCamera() --> OLD: private static final int ANGLE_TOLERANCE = 40;	
-	//To be inherited by superclass
-	private float[] positions;
-	private float[] normals;
+		
 	private Planet planet;
-
-	private Matrix4f modelMatrix;
-	private int[] indices;
 	private int currentDepth;
 
 	private Vector3f v1,v2,v3,n1,n2,n3;
@@ -39,16 +37,15 @@ public class DynamicSphere
 	private int positionPointer; 
 	private int triangleIndexCount;
 	private int minTriangles;
-	private SphereVertexArray va;
 
-	private Matrix4f modelViewMatrix;
 	
-	public DynamicSphere(float radius, int minTriangles, Planet _planet) {
-		positions = new float[minTriangles * 3 * 4 * 2];
-		normals = new float[minTriangles * 3 * 4 * 2];
+	public DynamicSphere(float radius, int minTriangles, Planet _planet, Matrix4f modelViewMatrix) {
+		vertices = new float[minTriangles * 3 * 4 * 2];
+		normals = new float[vertices.length];
+		uvCoords = new float[vertices.length * 2];
+		indices = new int[]{};
 		planet = _planet; 
 		
-		modelViewMatrix = new Matrix4f();
 		modelMatrix = new Matrix4f();
 		v1 = new Vector3f();
 		v2 = new Vector3f();
@@ -59,14 +56,12 @@ public class DynamicSphere
 		
 		positionPointer = 0;
 		this.minTriangles = minTriangles;
-		va = new SphereVertexArray(positions, normals, 0, new int[]{});
+		mesh = new VertexArray(vertices, normals, uvCoords, indices);
 		this.radius = radius;
-		update();
+		update(modelViewMatrix);
 	}
 	
-	public void update() {						
-		Matrix4f.mul(Info.camera.getViewMatrix(),modelMatrix, modelViewMatrix);
-		
+	public void update(Matrix4f modelViewMatrix) {						
 		positionPointer = 0;
 
 		int[] t = createOctahedron();
@@ -74,18 +69,18 @@ public class DynamicSphere
 		int depth = 0;
 		while(triangleIndexCount < minTriangles * 3)
 		{
-			t = subdivide(t, triangleIndexCount, depth++);
+			t = subdivide(t, triangleIndexCount, depth++, modelViewMatrix);
 			if(t.length == 0)
 				break;
 		}
 		currentDepth = depth;
 		indices = t;
 
-		va.update(positions, normals, positionPointer, indices, triangleIndexCount);
+		mesh.update(vertices, normals, uvCoords, indices);
 	}
 	
 	public void render(int mode) {
-		va.render(mode);
+		mesh.render(mode);
 	}
 	
 	public int getTriangleCount() {
@@ -96,8 +91,7 @@ public class DynamicSphere
 		return positionPointer / 3;
 	}
 	
-	private int[] createOctahedron()
-	{
+	private int[] createOctahedron() {
 		int[] indices = new int[]
 				{
 					2,4,1,
@@ -121,7 +115,6 @@ public class DynamicSphere
 	}
 	
 	private int writePosition(Vector3f pos) {
-
 		//Lenz Edition
 		createNoise(pos);
 				
@@ -153,11 +146,11 @@ public class DynamicSphere
 		finalNormal = pos;
 
 		this.normals[positionPointer] = finalNormal.x;
-		this.positions[positionPointer++] = pos.x;
+		this.vertices[positionPointer++] = pos.x;
 		this.normals[positionPointer] = finalNormal.y;
-		this.positions[positionPointer++] = pos.y;
+		this.vertices[positionPointer++] = pos.y;
 		this.normals[positionPointer] = finalNormal.z;
-		this.positions[positionPointer++] = pos.z;
+		this.vertices[positionPointer++] = pos.z;
 		
 		return (positionPointer-3) / 3;
 	}
@@ -166,12 +159,12 @@ public class DynamicSphere
 		float[] triangle = new float[9];
 		
 		for(int i = 0; i < 9; i++)
-			triangle[i] = positions[(triangleIndices[i / 3] * 3) + (i % 3)];
+			triangle[i] = vertices[(triangleIndices[i / 3] * 3) + (i % 3)];
 		
 		return triangle;
 	}
 	
-	private int[] subdivide(int[] triangles, int triangleCount, int depth) {
+	private int[] subdivide(int[] triangles, int triangleCount, int depth, Matrix4f modelViewMatrix) {
 		int[] newTriangles = new int[triangleCount * 4];
 		int trianglePointer = 0;
 		int[] triangleIndices;
@@ -185,7 +178,7 @@ public class DynamicSphere
 			{
 				if(!isFacingTowardsCamera(triangleIndices))
 					continue;
-				if (!isInViewFrustum(triangleIndices))
+				if (!isInViewFrustum(triangleIndices, modelViewMatrix))
 					continue; // clip
 			}
 	
@@ -245,17 +238,20 @@ public class DynamicSphere
 			};
 	}
 
-	private boolean isInViewFrustum(float[] positions) {
+	private boolean isInViewFrustum(int[] triangleIndices, Matrix4f modelViewMatrix) {
+
+		float[] position = getPositions(triangleIndices);
+
 		Matrix4f p = Info.projectionMatrix;
 		float x,y,z;
 
 
 		float[] w = new float[3];
-		for(int i = 0; i < positions.length; i+=3) {
+		for(int i = 0; i < position.length; i+=3) {
 			//Object space -> world space -> camera space
-			x = (modelViewMatrix.m00 * positions[i]) + (modelViewMatrix.m10 * positions[i+1]) + (modelViewMatrix.m20 * positions[i+2]) + (modelViewMatrix.m30);
-			y = (modelViewMatrix.m01 * positions[i]) + (modelViewMatrix.m11 * positions[i+1]) + (modelViewMatrix.m21 * positions[i+2]) + (modelViewMatrix.m31);
-			z = (modelViewMatrix.m02 * positions[i]) + (modelViewMatrix.m12 * positions[i+1]) + (modelViewMatrix.m22 * positions[i+2]) + (modelViewMatrix.m32);
+			x = (modelViewMatrix.m00 * position[i]) + (modelViewMatrix.m10 * position[i+1]) + (modelViewMatrix.m20 * position[i+2]) + (modelViewMatrix.m30);
+			y = (modelViewMatrix.m01 * position[i]) + (modelViewMatrix.m11 * position[i+1]) + (modelViewMatrix.m21 * position[i+2]) + (modelViewMatrix.m31);
+			z = (modelViewMatrix.m02 * position[i]) + (modelViewMatrix.m12 * position[i+1]) + (modelViewMatrix.m22 * position[i+2]) + (modelViewMatrix.m32);
 			
 			w[i/3] = -z;
 			
@@ -271,17 +267,17 @@ public class DynamicSphere
 			if ((x <= VIEW_FRUSTUM_OFFSET && x >= -VIEW_FRUSTUM_OFFSET) && (y <= VIEW_FRUSTUM_OFFSET && y >= -VIEW_FRUSTUM_OFFSET) && z > 0)
 				return true;
 								
-			positions[i] = x;
-			positions[i+1] = y;
-			positions[i+2] = z;
+			position[i] = x;
+			position[i+1] = y;
+			position[i+2] = z;
 		}
 		
-		if(intersectsNDCPlane(positions)) {
+		if(intersectsNDCPlane(position)) {
 			return true;
 		}
 		
-		if(frustumCompletlyInTriangle(positions)) {
-			if(positions[2] > 0 && positions[5] > 0 && positions[8] > 0)
+		if(frustumCompletlyInTriangle(position)) {
+			if(position[2] > 0 && position[5] > 0 && position[8] > 0)
 			return true;
 		}
 		return false;
@@ -357,12 +353,6 @@ public class DynamicSphere
 		return (minX <= -1 && maxX >= 1 && minY <= -1 && maxY >= 1);
 	}
 	
-	private boolean isInViewFrustum(int[] triangleIndices) {	
-		float[] positions = getPositions(triangleIndices);
-		
-		return isInViewFrustum(positions);
-	}
-
 	//OLD isFacingTowardsCamera
 	/*
 	private boolean isFacingTowardsCamera(int[] triangleIndices) 
@@ -425,71 +415,5 @@ public class DynamicSphere
 		// 0.14 % = 8 km von 6000 km
 		v.scale(1.0f + noise * planet.getMountainHeight());
 	}
-	
-	public class SphereVertexArray {
-		private int vertexCount;
-		private int indexCount;
-		private int vaoHandle;
-		private int vboHandle;
-		private int nboHandle;
-		private int iboHandle;
-		
-		public static final int VERTEX_LOCATION = 0;
-		public static final int NORMAL_LOCATION = 2;
-		
-		public SphereVertexArray(float[] vertices, float[] normals, int vertexCount, int[] indices) {
-			initBufferHandles();
-			this.vertexCount = vertexCount;
-			doBufferStuff(vertices, normals, indices);
-		}
-		
-		public void update(float[] vertices, float[] normals, int vertexCount, int[] indices, int indexCount) {
-			this.vertexCount = vertexCount;
-			this.indexCount = indexCount;
-			doBufferStuff(vertices, normals, indices);
-		}
-		
-		private void initBufferHandles() {
-			vaoHandle = glGenVertexArrays();
-			vboHandle = glGenBuffers();
-			nboHandle = glGenBuffers();
-			iboHandle = glGenBuffers();
-		}
-		
-		private void doBufferStuff(float[] vertices, float[] normals, int[] indices) {		
-			glBindVertexArray(vaoHandle);
-			
-			FloatBuffer vBuffer = BufferUtils.createFloatBuffer(vertexCount);
-			vBuffer.put(vertices, 0, vertexCount).flip();
-		
-			FloatBuffer nBuffer = BufferUtils.createFloatBuffer(vertexCount);
-			nBuffer.put(normals, 0, vertexCount).flip();
-			
-			glBindBuffer(GL_ARRAY_BUFFER, vboHandle);
-			glBufferData(GL_ARRAY_BUFFER, vBuffer, GL_STATIC_DRAW);
-			glVertexAttribPointer(VERTEX_LOCATION, 3, GL_FLOAT, false, 0, 0);
-			glEnableVertexAttribArray(VERTEX_LOCATION);
 
-			glBindBuffer(GL_ARRAY_BUFFER, nboHandle);
-			glBufferData(GL_ARRAY_BUFFER, nBuffer, GL_STATIC_DRAW);
-			glVertexAttribPointer(NORMAL_LOCATION, 3, GL_FLOAT, true, 0, 0);
-			glEnableVertexAttribArray(NORMAL_LOCATION);
-			
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboHandle);
-			IntBuffer indexBuffer = BufferUtils.createIntBuffer(indexCount);
-			indexBuffer.put(indices, 0, indexCount).flip();
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);	
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindVertexArray(0);
-		}
-		
-		public void render(int mode) {
-			glBindVertexArray(vaoHandle);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboHandle);
-			glDrawElements(mode, indexCount, GL_UNSIGNED_INT, 0);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			glBindVertexArray(0);
-		}
-	}
 }

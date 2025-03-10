@@ -15,13 +15,13 @@ uniform float radius;
 uniform vec3 cameraPosition;
 uniform vec3 lightPosition;
 uniform float mountainHeight;
+uniform float ambientLight;
 
 out vec4 out_Color;
 
 void singleColor(float value) {
 	out_Color = vec4(value, value, value, 1.0);
 }
-
 
 void main(void) {	
 	vec4 heightColor;
@@ -31,7 +31,7 @@ void main(void) {
 
 	float heightGradientValue = height / maxHeight;
  
- 	float ambient = 0.3;
+ 	float ambient = ambientLight;
 	vec3 normal = normalize(pass_data.normal);
 	vec3 lightDir = normalize(lightPosition - pass_data.position);
 	float diffuse = max(dot(normal, lightDir), 0.0);
@@ -62,26 +62,9 @@ void main(void) {
 
 	float lightResult = ambient + diffuse;
 
-	out_Color = (diffuse + ambient) * heightColor;
-	
-	
-	/*HEIGHTLINES
-	if(	(heightGradientValue > sand && heightGradientValue < sand + 0.001) 	 || 
-		(heightGradientValue > grass && heightGradientValue < grass + 0.002) ||
-		(heightGradientValue > stone && heightGradientValue < stone + 0.003) ||
-		(heightGradientValue > snow && heightGradientValue < snow + 0.004))
-	{
-		singleColor(0.0);
-	}*/
-	
-	/*OUTLINES
-	if(dot(pass_data.viewDir, pass_data.normal) < mix(0.5, 0.1, max(0.0, dot(pass_data.normal, pass_data.lightDir))))
-	{
-		singleColor(0.0);
-	}
-	else
-	{
-		finalColor(heightColor, lightDiffuse, ambient)
-	}*/
+	float heightLines = smoothstep(0.99, 1.0, sin(heightGradientValue * 80.0));
+	heightColor.xyz *= (diffuse + ambient) - heightLines * 0.1;
+
+	out_Color = heightColor;
 	
 }

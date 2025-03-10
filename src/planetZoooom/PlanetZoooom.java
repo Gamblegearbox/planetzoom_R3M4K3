@@ -17,6 +17,7 @@ import planetZoooom.gameContent.WaterSurface;
 import planetZoooom.graphics.ShaderProgram;
 import planetZoooom.input.Keyboard;
 import planetZoooom.interfaces.Game;
+import planetZoooom.utils.CustomNoise;
 import planetZoooom.utils.GameUtils;
 import planetZoooom.utils.Info;
 import planetZoooom.utils.MatrixUtils;
@@ -65,6 +66,8 @@ public class PlanetZoooom implements Game
 
 	private static final Vector3f SUN_POSITION = new Vector3f(-500.0f, 0.0f, 0.0f);
 	private static final Vector3f CAM_START_POSITION = new Vector3f(0.0f, 0.0f, 200.0f);
+	private static final float CAM_COLLISION_OFFSET = 2.0f;
+	private static final float AMBIENT_LIGHT_STRENGTH = 0.05f;
 
 	private float time = 0;
 	
@@ -120,7 +123,7 @@ public class PlanetZoooom implements Game
 	}
 
 	private void initGameObjects() {
-		planet = new Planet(100.0f, new Vector3f(0f, 0f, 0f));
+		planet = new Planet(100.0f, new Vector3f(0f, 0f, 0f), modelViewMatrix);
 		hud = new HeadsUpDisplay(10, 10, "arial_nm.png", HUD_BG_WHITE);
 		sun = new BillBoard(SUN_POSITION, 100.0f, 100.0f);
 	}
@@ -130,30 +133,32 @@ public class PlanetZoooom implements Game
 		time += deltaTime;
 
 		this.processKeyboardInputs(deltaTime);
+		this.updateCamera();
 		
+		if(!freezeUpdate) {
+			planet.update(modelViewMatrix);
+		}
+
+		updateHud(hudMode);	
+	}
+
+	@Override
+	public void render(){
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //DO NOT MOVE THIS LINE! ....THERE IS A REASON THAT IT IS NOT IN RENDERER;
-		
+
 		if(freezeUpdate) {
-			glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+			glClearColor(1.0f, 0.6f, 0.5f, 1.0f);
 		}
 		else {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			planet.update();
 		}
 		
-		// TODO: sort before rendering to make transparency working
+		// check if rendered (inFrustum, debug, freeze, etc) and add to render list
+		// sort render list by distance
+		// render list content
+
 		drawSun();	
 		drawPlanet();
-		if(planet.getHasWater()) {
-			drawWaterSurface();
-		}
-
-		glFrontFace(GL_CW);
-		drawAtmosphere();
-		glFrontFace(GL_CCW);
-
-		// HUD
-		updateHud(hudMode);
 		drawHUD();
 	}
 
@@ -168,8 +173,24 @@ public class PlanetZoooom implements Game
 		sun.render(GL_TRIANGLES);
 	}
 	
+	private void drawPlanet() {
+		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getPlanetSurface().getModelMatrix(), modelViewMatrix);
+	
+		drawPlanetSurface();
+
+		if(!freezeUpdate) {
+			glFrontFace(GL_CW);
+			drawAtmosphere();
+			glFrontFace(GL_CCW);
+
+			if(planet.getHasWater()) {
+				drawWaterSurface();
+			}
+		}
+	}
+
 	private void drawAtmosphere() {
-		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getAtmosphere().getModelMatrix(), modelViewMatrix);
+		Matrix4f.invert(planet.getAtmosphere().getModelMatrix(), normalMatrix);
 		Vector3f.sub(SUN_POSITION, planet.getAtmosphere().getPosition(), lightDirection);
 		lightDirection.normalise();
 		
@@ -203,8 +224,7 @@ public class PlanetZoooom implements Game
 		
 	}
 	
-	private void drawPlanet() {
-		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getPlanetSurface().getModelMatrix(), modelViewMatrix);
+	private void drawPlanetSurface() {
 		Matrix4f.invert(planet.getPlanetSurface().getModelMatrix(), normalMatrix);
 		
 		ShaderProgram shader;
@@ -232,6 +252,7 @@ public class PlanetZoooom implements Game
 		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
 		shader.loadUniform1f(planet.getRadius(), "radius");
 		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
+		shader.loadUniform1f(AMBIENT_LIGHT_STRENGTH, "ambientLight");
 
 		planet.getPlanetSurface().render(GL_TRIANGLES);
 		
@@ -249,7 +270,6 @@ public class PlanetZoooom implements Game
 	}
 	
 	private void drawWaterSurface() {
-		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getWaterSurface().getModelMatrix(), modelViewMatrix);
 		Matrix4f.invert(planet.getWaterSurface().getModelMatrix(), normalMatrix);
 
 		glUseProgram(waterShader.getId());
@@ -258,6 +278,7 @@ public class PlanetZoooom implements Game
 		waterShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
 		waterShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
 		waterShader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
+		waterShader.loadUniform1f(AMBIENT_LIGHT_STRENGTH, "ambientLight");
 
 		switch(planet.getShaderMode()) {
 			case Planet.STYLE_EARTH:	waterShader.loadUniformVec3f(WaterSurface.BLUE, "waterColor");
@@ -394,7 +415,7 @@ public class PlanetZoooom implements Game
 	private void reset() {
 		planet.setNoiseSeed(0);
 		planet.resetPlanet();
-		Info.camera = new FreeCamera(new Vector3f(CAM_START_POSITION.x, CAM_START_POSITION.y, CAM_START_POSITION.z));
+		Info.camera.setPosition(CAM_START_POSITION);
 		planet.setShaderMode(0);
 		wireframe = false;
 		freezeUpdate = false;
@@ -468,6 +489,58 @@ public class PlanetZoooom implements Game
 					atmosphere.setWaveLengthBlue(atmosphere.getWaveLengthBlue() - 0.01f);
 				break;
 			}
+		}
+	}
+
+	private void updateCamera(){
+		Vector3f planetToCam = new Vector3f();
+		Vector3f.sub(Info.camera.getPosition(), planet.getPosition(), planetToCam);
+
+		float camPlanetDistance = planetToCam.length() - planet.getRadius();
+		adjustCamSpeed(camPlanetDistance);
+		handleCollision(planetToCam);
+	}
+
+	private void adjustCamSpeed(float camPlanetDistance) {
+//		System.out.printf("%.2f / %.2f\n", slowDownRadius, camSphereDistance);
+		float slowDownRadius = planet.getRadius() * 1.15f;
+		
+		if(camPlanetDistance < slowDownRadius) {
+			float camSpeed = FreeCamera.MAX_CAM_SPEED / slowDownRadius * camPlanetDistance;
+			
+			if(camSpeed < FreeCamera.MIN_CAM_SPEED)
+				camSpeed = FreeCamera.MIN_CAM_SPEED;
+
+				Info.camera.setVelocity(camSpeed);
+		} 
+		else {
+			Info.camera.setVelocity(FreeCamera.MAX_CAM_SPEED);
+		}
+	}
+	
+	private void handleCollision(Vector3f planetToCam) {
+		Vector3f cam = Info.camera.getPosition();
+
+		float noiseSeed = planet.getNoiseSeed();
+		float planetRadius = planet.getRadius();
+
+		float actualCamDistance = planetToCam.length();
+		planetToCam.normalise().scale(planetRadius);
+		double noise = CustomNoise.perlinNoise(planetToCam.x + noiseSeed, planetToCam.y + noiseSeed, planetToCam.z + noiseSeed, planet.getOctaves(), planet.getLambda(planetRadius), planet.getAmplitude());
+
+		if (noise < 0) {
+			noise = 0;
+		}
+
+		noise *= planet.getMountainHeight() * planetRadius;
+
+		float minCamDistance = (float) (planetRadius + noise);
+
+		if (actualCamDistance < minCamDistance + CAM_COLLISION_OFFSET) {
+			planetToCam.normalise();
+			planetToCam.scale(-(actualCamDistance - minCamDistance) + CAM_COLLISION_OFFSET);
+
+			Vector3f.add(cam, planetToCam, cam);
 		}
 	}
 }

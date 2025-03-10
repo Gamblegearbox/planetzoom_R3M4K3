@@ -31,8 +31,7 @@ public class CoreEngine
 
     public Timer timer;
     
-    public CoreEngine(Game game)
-    {
+    public CoreEngine(Game game){
         this.game = game;
     }
 
@@ -114,6 +113,7 @@ public class CoreEngine
         glfwPollEvents();
    
         game.update(timer.getDeltaTime());
+        game.render();
         
         if(Keyboard.isKeyPressed(GLFW_KEY_ESCAPE))
         	glfwSetWindowShouldClose(windowHandle, GL_TRUE);

@@ -20,8 +20,7 @@ public abstract class MeshObject
 	protected VertexArray mesh;
 	private Texture texture;
 	
-	public void render(int mode)
-	{
+	public void render(int mode) {
 		if(texture != null){
 			texture.bind();
 		}

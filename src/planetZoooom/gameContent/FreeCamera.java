@@ -138,64 +138,53 @@ public class FreeCamera implements Camera
 		return lookAt;
 	}
 	
-	public void moveForward(float amount)
-	{			
+	public void moveForward(float amount) {			
 		Vector3f movement = calculateMovementVector(new Vector3f(0, 0, -amount));
 		Vector3f.add(position, movement, position);
 	}
 	
-	public void moveBackward(float amount)
-	{
+	public void moveBackward(float amount) {
 		Vector3f movement = calculateMovementVector(new Vector3f(0, 0, amount));
 		Vector3f.add(position, movement, position);
 	}
 	
-	public void strafeLeft(float amount)
-	{
+	public void strafeLeft(float amount) {
 		Vector3f movement = calculateMovementVector(new Vector3f(-amount, 0, 0));
 		Vector3f.add(position, movement, position);
 	}
 	
-	public void strafeRight(float amount)
-	{
+	public void strafeRight(float amount) {
 		Vector3f movement = calculateMovementVector(new Vector3f(amount, 0, -0));
 		Vector3f.add(position, movement, position);
 	}
 	
-	public void moveUp(float amount)
-	{
+	public void moveUp(float amount) {
 		Vector3f movement = calculateMovementVector(new Vector3f(0, amount, 0));
 		Vector3f.add(position, movement, position);
 	}
 	
-	public void moveDown(float amount)
-	{
+	public void moveDown(float amount) {
 		Vector3f movement = calculateMovementVector(new Vector3f(0, -amount, 0));
 		Vector3f.add(position, movement, position);
 	}
 
-	public Vector3f getLocalUpVector()
-	{
+	public Vector3f getLocalUpVector() {
 		return calculateMovementVector(new Vector3f(0.0f, 1.0f, 0.0f));
 	}
 	
-	public Vector3f getLocalRightVector()
-	{
+	public Vector3f getLocalRightVector() {
 		return calculateMovementVector(new Vector3f(1.0f, 0.0f, 0.0f));	
 	}
 	
-	public boolean isInvertedYAxis()
-	{
+	public boolean isInvertedYAxis() {
 		return invertedYAxis;
 	}
 
-	public void setInvertedYAxis(boolean invertedYAxis)
-	{
+	public void setInvertedYAxis(boolean invertedYAxis) {
 		this.invertedYAxis = invertedYAxis;
 	}
 	
-	private Vector3f calculateMovementVector(Vector3f movement)
-	{
+	private Vector3f calculateMovementVector(Vector3f movement) {
 		Quaternion inverse = new Quaternion();
 		Quaternion.negate(orientation, inverse);
 		
@@ -215,8 +204,7 @@ public class FreeCamera implements Camera
 	}
 
 	@Override
-	public void setPosition(Vector3f position) 
-	{
+	public void setPosition(Vector3f position) {
 		this.position = position;
 	}
 
