@@ -1,12 +1,5 @@
 package planetZoooom.geometry;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -133,8 +126,8 @@ public class DynamicSphere extends MeshObject
 		Vector3f.add(orthoVec2, pos, orthoVec2);
 		orthoVec1.normalise(orthoVec1);
 		orthoVec2.normalise(orthoVec2);
-		orthoVec1.scale(6500.0f);
-		orthoVec2.scale(6500.0f);
+		orthoVec1.scale(getRadius());
+		orthoVec2.scale(getRadius());
 		createNoise(orthoVec1);
 		createNoise(orthoVec2);
 		Vector3f.sub(orthoVec1, pos, orthoVec1);
@@ -143,8 +136,6 @@ public class DynamicSphere extends MeshObject
 		orthoVec2.scale(1/orthoLength2);
 		Vector3f.cross(orthoVec2, orthoVec1, finalNormal);
 		
-		finalNormal = pos;
-
 		this.normals[positionPointer] = finalNormal.x;
 		this.vertices[positionPointer++] = pos.x;
 		this.normals[positionPointer] = finalNormal.y;
@@ -153,6 +144,17 @@ public class DynamicSphere extends MeshObject
 		this.vertices[positionPointer++] = pos.z;
 		
 		return (positionPointer-3) / 3;
+	}
+
+	public void createNoise(Vector3f v) {
+		double lambda = planet.getLambdaBaseFactor() * getRadius();
+		double noiseSeed = planet.getNoiseSeed();
+		int octaves = planet.getOctaves();
+		double amplitude = 0.25;//planet.getAmplitude();
+		
+		float noise = (float) CustomNoise.perlinNoise(v.x + noiseSeed, v.y + noiseSeed, v.z + noiseSeed, octaves, lambda, amplitude);
+
+		v.scale(1.0f + noise);
 	}
 		
 	private float[] getPositions(int[] triangleIndices) {
@@ -403,17 +405,4 @@ public class DynamicSphere extends MeshObject
 				
 		return totalTriangles;
 	}
-	
-	public void createNoise(Vector3f v) {
-		double lambda = planet.getLambdaBaseFactor() * getRadius();
-		double noiseSeed = planet.getNoiseSeed();
-		int octaves = planet.getOctaves();
-		double amplitude = planet.getAmplitude();
-		
-		float noise = (float) CustomNoise.perlinNoise(v.x + noiseSeed, v.y + noiseSeed, v.z + noiseSeed, octaves, lambda, amplitude);
-
-		// 0.14 % = 8 km von 6000 km
-		v.scale(1.0f + noise * planet.getMountainHeight());
-	}
-
 }

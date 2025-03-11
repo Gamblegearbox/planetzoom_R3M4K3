@@ -11,7 +11,7 @@ public class Planet //implements GameObjectListener
 	private final static float MIN_LAMBDA_BASE_FACTOR = 0.1f;
 	private final static int MIN_OCTAVES = 1;
 	private final static int MAX_OCTAVES = 10;
-	private final static float MIN_MOUNTAIN_HEIGHT = 0.0214f;
+	private final static float MIN_MOUNTAIN_HEIGHT = 0.15f;
 	private final static int MIN_TRIANGLES = 5000;
 
 	private Vector3f position;
@@ -34,23 +34,21 @@ public class Planet //implements GameObjectListener
 	public static final int STYLE_DUNE = 2;
 	public static final int STYLE_UNICOLOR = 3;
 	
-	public Planet(float radius, Vector3f position, Matrix4f modelViewMatrix)
-	{
+	public Planet(float radius, Vector3f position, Matrix4f modelViewMatrix) {
 		this.position = position;
 		this.planetSurface = new DynamicSphere(radius, MIN_TRIANGLES, this, modelViewMatrix);
 		this.atmosphere = new Atmosphere(this);
 		this.waterSurface = new WaterSurface(this);
 
-		//sphere.addListener(this);
 		resetPlanet();
 	}
 
 	public void resetPlanet() {
 		lambdaBaseFactor = 0.75f;
-		octaves = 3;
-		amplitude = 1.77f;
+		octaves = 1;
+		amplitude = 1.0f;
 		noiseSeed = 0;
-		mountainHeight = MIN_MOUNTAIN_HEIGHT;
+		mountainHeight = 1.0f;//MIN_MOUNTAIN_HEIGHT;
 	}
 
 	public void update(Matrix4f modelViewMatrix) {

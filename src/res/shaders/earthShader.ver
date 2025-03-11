@@ -22,7 +22,7 @@ uniform mat4 normalMatrix;
 
 void main(void) {
 	pass_data.position = position;
-	pass_data.normal = mat3(normalMatrix) * normal;
+	pass_data.normal = normalize(mat3(normalMatrix) * normal);
 	pass_data.uv = uvCoords;
 
 	gl_Position = (projectionMatrix * modelViewMatrix) * vec4(position, 1.0);

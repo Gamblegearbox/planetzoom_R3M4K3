@@ -40,26 +40,26 @@ vec2 toPolar(vec2 cartesian){
 
 void main(void) {	
 	float height = length(pass_data.position) - radius;
-	float maxHeight = 20.0; //TODO: define max-height like this?
+	float maxHeight = 10.0; //TODO: define max-height like this?
 
 	float heightGradient = height / maxHeight; 
  
  	float ambient = ambientLight;
-	vec3 normal = normalize(pass_data.normal);
+	vec3 normal = pass_data.normal;
 	vec3 lightDir = normalize(lightPosition - pass_data.position);
 	float diffuse = max(dot(normal, lightDir), 0.0);
 
 	// COLOR BORDERS
-	float snow = 0.9;
-	float stone = 0.6;
-	float grass = 0.1;
+	float snow = 0.6;
+	float stone = 0.2;
+	float grass = 0.05;
 
 	vec3 colorSand  = vec3( 0.89, 0.78, 0.41 );
 	vec3 colorGrass = vec3( 0.22, 0.58, 0.28 );
 	vec3 colorStone = vec3( 0.50, 0.56, 0.39 );
 	vec3 colorSnow  = vec3( 0.87, 0.90, 0.89 );
 
-	float mask1 = step(0.5, heightGradient); 
+	float mask1 = step(grass, heightGradient); 
 	float mask2 = step(stone, heightGradient);
 	float mask3 = step(snow, heightGradient);
 
@@ -74,35 +74,33 @@ void main(void) {
 	heightColor *= (diffuse + ambient) - heightLines * 0.1;
 
 //----------------------------------------------------------------
-	// // Scale
-	// float u = normal.x * 0.5 + 0.5;
-	// float v = normal.y * 0.5 + 0.5;
-    // vec2 st = vec2(u, v) ;
+	// Scale
+    vec2 st = sphere2mapUV_Equirectangular(normal) * 15.0;
 
-    // // Tile the space
-    // vec2 i_st = floor(st);
-    // vec2 f_st = fract(st);
+    // Tile the space
+    vec2 i_st = floor(st);
+    vec2 f_st = fract(st);
 
-	// float m_dist = 1.0;  // minimum distance
+	float m_dist = 1.0;  // minimum distance
 
-	// for (int y= -1; y <= 1; y++) {
-    //     for (int x= -1; x <= 1; x++) {
-    //         // Neighbor place in the grid
-    //         vec2 neighbor = vec2(float(x),float(y));
+	for (int y= -1; y <= 1; y++) {
+        for (int x= -1; x <= 1; x++) {
+            // Neighbor place in the grid
+            vec2 neighbor = vec2(float(x),float(y));
 
-    //         // Random position from current + neighbor place in the grid
-    //         vec2 point = random2(i_st + neighbor);
+            // Random position from current + neighbor place in the grid
+            vec2 point = random2(i_st + neighbor);
 
-	// 		// Vector between the pixel and the point
-    //         vec2 diff = neighbor + point - f_st;
+			// Vector between the pixel and the point
+            vec2 diff = neighbor + point - f_st;
 
-    //         // Distance to the point
-    //         float dist = length(diff);
+            // Distance to the point
+            float dist = length(diff);
 
-    //         // Keep the closer distance
-    //         m_dist = min(m_dist, dist);
-    //     }
-    // }
+            // Keep the closer distance
+            m_dist = min(m_dist, dist);
+        }
+    }
 
 	out_Color = vec4(heightColor, 1.0);
 	
