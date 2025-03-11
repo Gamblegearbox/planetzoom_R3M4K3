@@ -21,7 +21,6 @@ public class VertexArray
 	private int iboHandle;
 	private int colorHandle;
 	
-	
 	public static final int VERTEX_LOCATION = 0;
 	public static final int UV_LOCATION = 1;
 	public static final int NORMAL_LOCATION = 2;

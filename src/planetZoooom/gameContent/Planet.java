@@ -173,22 +173,6 @@ public class Planet //implements GameObjectListener
 	{
 		return lambdaBaseFactor * planetRadius;
 	}
-
-//	@Override
-//	public void vertexCreated(Vector3f v)
-//	{
-//		float planetRadius = this.getRadius();
-//
-//		final float lambda = lambdaBaseFactor * planetRadius;
-//
-//		float noise = (float) CustomNoise.perlinNoise(v.x + noiseSeed, v.y + noiseSeed, v.z + noiseSeed, octaves, lambda, amplitude);
-//
-//		if (noise < 0)
-//			noise = 0;
-//
-//		// 0.14 % = 8 km von 6000 km
-//		v.scale(1 + noise * mountainHeight);
-//	}
 			
 	public void setShaderMode(int mode){
 		this.shaderMode = mode;
