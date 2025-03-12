@@ -5,13 +5,12 @@ import org.lwjgl.util.vector.Vector3f;
 
 import planetZoooom.geometry.DynamicSphere;
 
-public class Planet //implements GameObjectListener
+public class Planet
 {
-	private final static float MIN_AMPLITUDE = 1;
-	private final static float MIN_LAMBDA_BASE_FACTOR = 0.1f;
+	private final static float MIN_AMPLITUDE = 0.05f;
+	private final static float MIN_WAVE_LENGTH = 0.1f;
 	private final static int MIN_OCTAVES = 1;
 	private final static int MAX_OCTAVES = 10;
-	private final static float MIN_MOUNTAIN_HEIGHT = 0.15f;
 	private final static int MIN_TRIANGLES = 5000;
 
 	private Vector3f position;
@@ -22,9 +21,8 @@ public class Planet //implements GameObjectListener
 
 	private float amplitude;
 	private int octaves;
-	private float lambdaBaseFactor;
+	private float wavelength;
 	private float noiseSeed;
-	private float mountainHeight;	
 	
 	private int shaderMode = 0;
 	private boolean hasWater;
@@ -44,11 +42,10 @@ public class Planet //implements GameObjectListener
 	}
 
 	public void resetPlanet() {
-		lambdaBaseFactor = 0.75f;
+		wavelength = 1.0f;
 		octaves = 1;
-		amplitude = 1.0f;
-		noiseSeed = 0;
-		mountainHeight = 1.0f;//MIN_MOUNTAIN_HEIGHT;
+		amplitude = MIN_AMPLITUDE;
+		noiseSeed = (float) (Math.random() * Integer.MAX_VALUE);
 	}
 
 	public void update(Matrix4f modelViewMatrix) {
@@ -92,17 +89,17 @@ public class Planet //implements GameObjectListener
 			this.octaves = octaves;
 	}
 
-	public float getLambdaBaseFactor()
+	public float getWavelength()
 	{
-		return lambdaBaseFactor;
+		return wavelength;
 	}
 
-	public void setLambdaBaseFactor(float lambdaBaseFactor)
+	public void setWavelength(float wavelength)
 	{
-		if (lambdaBaseFactor < MIN_LAMBDA_BASE_FACTOR)
-			this.lambdaBaseFactor = MIN_LAMBDA_BASE_FACTOR;
+		if (wavelength < MIN_WAVE_LENGTH)
+			this.wavelength = MIN_WAVE_LENGTH;
 		else
-			this.lambdaBaseFactor = lambdaBaseFactor;
+			this.wavelength = wavelength;
 	}
 
 	public float getNoiseSeed()
@@ -118,19 +115,6 @@ public class Planet //implements GameObjectListener
 	public void setAtmosphere(Atmosphere atmosphere)
 	{
 		this.atmosphere = atmosphere;
-	}
-
-	public float getMountainHeight()
-	{
-		return mountainHeight;
-	}
-
-	public void setMountainHeight(float mountainHeight)
-	{
-		if (mountainHeight < MIN_MOUNTAIN_HEIGHT)
-			this.mountainHeight = MIN_MOUNTAIN_HEIGHT;
-		else
-			this.mountainHeight = mountainHeight;
 	}
 
 	public float getRadius()
@@ -169,7 +153,7 @@ public class Planet //implements GameObjectListener
 
 	public float getLambda(float planetRadius)
 	{
-		return lambdaBaseFactor * planetRadius;
+		return wavelength * planetRadius;
 	}
 			
 	public void setShaderMode(int mode){

@@ -67,7 +67,7 @@ public class PlanetZoooom implements Game
 	private static final Vector3f SUN_POSITION = new Vector3f(-500.0f, 0.0f, 0.0f);
 	private static final Vector3f CAM_START_POSITION = new Vector3f(0.0f, 0.0f, 200.0f);
 	private static final float CAM_COLLISION_OFFSET = 2.0f;
-	private static final float AMBIENT_LIGHT_STRENGTH = 0.05f;
+	private static final float AMBIENT_LIGHT_STRENGTH = 0.1f;
 
 	private float time = 0;
 	
@@ -251,7 +251,6 @@ public class PlanetZoooom implements Game
 		shader.loadUniformVec3f(SUN_POSITION, "lightPosition");
 		shader.loadUniformVec3f(Info.camera.getPosition(), "cameraPosition");
 		shader.loadUniform1f(planet.getRadius(), "radius");
-		shader.loadUniform1f(planet.getMountainHeight(), "mountainHeight");
 		shader.loadUniform1f(AMBIENT_LIGHT_STRENGTH, "ambientLight");
 
 		planet.getPlanetSurface().render(GL_TRIANGLES);
@@ -392,15 +391,13 @@ public class PlanetZoooom implements Game
 	private String getNoiseHUDText() {
 		return String.format(
 				"Noise properties\n\n" +
-				"Mountain height: %.4f\n" + 
 				"Seed:            %.2f\n" +
 				"Wavelength:      %.2f\n" + 
 				"Octaves:         %d\n" + 
 				"Amplitude:       %.2f\n" 
 				,
-				planet.getMountainHeight(),
 				planet.getNoiseSeed(),
-				planet.getLambdaBaseFactor(),
+				planet.getWavelength(),
 				planet.getOctaves(), 
 				planet.getAmplitude()
 				);
@@ -445,19 +442,14 @@ public class PlanetZoooom implements Game
 					planet.setOctaves(planet.getOctaves() - 1);
 				
 				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_U))
-					planet.setLambdaBaseFactor(planet.getLambdaBaseFactor() + 0.001f);
+					planet.setWavelength(planet.getWavelength() + 0.005f);
 				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_J))
-					planet.setLambdaBaseFactor(planet.getLambdaBaseFactor() - 0.001f);
+					planet.setWavelength(planet.getWavelength() - 0.005f);
 				
 				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_Y))
-					planet.setNoiseSeed(planet.getNoiseSeed() + planet.getRadius() / 1000);
+					planet.setNoiseSeed(planet.getNoiseSeed() + 1);
 				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_H))
-					planet.setNoiseSeed(planet.getNoiseSeed() - planet.getRadius() / 1000);
-				
-				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_T))
-					planet.setMountainHeight(planet.getMountainHeight() + 0.0005f);
-				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_G))
-					planet.setMountainHeight(planet.getMountainHeight() - 0.0005f);
+					planet.setNoiseSeed(planet.getNoiseSeed() - 1);
 				break;
 			}
 			case HUD_MODE_ATMOSPHERE: {
@@ -531,8 +523,6 @@ public class PlanetZoooom implements Game
 		if (noise < 0) {
 			noise = 0;
 		}
-
-		noise *= planet.getMountainHeight() * planetRadius;
 
 		float minCamDistance = (float) (planetRadius + noise);
 

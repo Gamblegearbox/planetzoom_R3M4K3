@@ -147,10 +147,10 @@ public class DynamicSphere extends MeshObject
 	}
 
 	public void createNoise(Vector3f v) {
-		double lambda = planet.getLambdaBaseFactor() * getRadius();
+		double lambda = planet.getWavelength() * getRadius();
 		double noiseSeed = planet.getNoiseSeed();
 		int octaves = planet.getOctaves();
-		double amplitude = 0.25;//planet.getAmplitude();
+		double amplitude = planet.getAmplitude();
 		
 		float noise = (float) CustomNoise.perlinNoise(v.x + noiseSeed, v.y + noiseSeed, v.z + noiseSeed, octaves, lambda, amplitude);
 
