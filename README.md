@@ -1,6 +1,6 @@
 # Planet Zoooom - R3M4K3
 
-10 years ago I was part of that project, we had lot's of ideas we could not fit into the given time frame. Let's see what this leads to on a "every once and a while" base :D
+10 years ago I was part of the project this one is forked from, we had lot's of ideas we could not fit into the given time frame. Now I found it interesting to revisit the code. Let's see what this leads to on a "every once and a while" base :D
 
 Check out the original: https://github.com/AndreasHennig/planetzoom
 
