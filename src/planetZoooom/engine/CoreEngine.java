@@ -93,7 +93,7 @@ public class CoreEngine
         glfwSetWindowPos(windowHandle, 100, 100);
 
         glfwMakeContextCurrent(windowHandle);
-        glfwSwapInterval(1); //vSync
+        glfwSwapInterval(0); //vSync
 
         glfwShowWindow(windowHandle);
 

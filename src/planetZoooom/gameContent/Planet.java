@@ -7,7 +7,13 @@ import planetZoooom.geometry.DynamicSphere;
 
 public class Planet
 {
-	private final static float MIN_AMPLITUDE = 0.05f;
+	public static final int STYLE_EARTH = 0;
+	public static final int STYLE_MARS = 1;
+	public static final int STYLE_DUNE = 2;
+	public static final int STYLE_UNICOLOR = 3;
+	
+	private final static float MIN_AMPLITUDE = 0.01f;
+	private final static float MAX_AMPLITUDE = 0.25f;
 	private final static float MIN_WAVE_LENGTH = 0.1f;
 	private final static int MIN_OCTAVES = 1;
 	private final static int MAX_OCTAVES = 10;
@@ -18,7 +24,7 @@ public class Planet
 	private DynamicSphere planetSurface;
 	private Atmosphere atmosphere;
 	private WaterSurface waterSurface;
-
+	
 	private float amplitude;
 	private int octaves;
 	private float wavelength;
@@ -26,13 +32,11 @@ public class Planet
 	
 	private int shaderMode = 0;
 	private boolean hasWater;
+	private float radius;
 	
-	public static final int STYLE_EARTH = 0;
-	public static final int STYLE_MARS = 1;
-	public static final int STYLE_DUNE = 2;
-	public static final int STYLE_UNICOLOR = 3;
 	
 	public Planet(float radius, Vector3f position, Matrix4f modelViewMatrix) {
+		this.radius = radius;
 		this.position = position;
 		this.planetSurface = new DynamicSphere(radius, MIN_TRIANGLES, this, modelViewMatrix);
 		this.atmosphere = new Atmosphere(this);
@@ -42,10 +46,10 @@ public class Planet
 	}
 
 	public void resetPlanet() {
-		wavelength = 1.0f;
-		octaves = 1;
-		amplitude = MIN_AMPLITUDE;
-		noiseSeed = (float) (Math.random() * Integer.MAX_VALUE);
+		setWavelength(1.0f);
+		setOctaves(3);
+		setAmplitude(MAX_AMPLITUDE * 0.5f);
+		setNoiseSeed((float) (Math.random() * Integer.MAX_VALUE));
 	}
 
 	public void update(Matrix4f modelViewMatrix) {
@@ -70,17 +74,17 @@ public class Planet
 	{
 		if (amplitude < MIN_AMPLITUDE)
 			this.amplitude = MIN_AMPLITUDE;
+		else if (amplitude > MAX_AMPLITUDE)
+			this.amplitude = MAX_AMPLITUDE;
 		else
 			this.amplitude = amplitude;
 	}
 
-	public int getOctaves()
-	{
+	public int getOctaves() {
 		return octaves;
 	}
 
-	public void setOctaves(int octaves)
-	{
+	public void setOctaves(int octaves) {
 		if (octaves < MIN_OCTAVES)
 			this.octaves = MIN_OCTAVES;
 		else if(octaves > MAX_OCTAVES)
@@ -89,13 +93,11 @@ public class Planet
 			this.octaves = octaves;
 	}
 
-	public float getWavelength()
-	{
+	public float getWavelength() {
 		return wavelength;
 	}
 
-	public void setWavelength(float wavelength)
-	{
+	public void setWavelength(float wavelength) {
 		if (wavelength < MIN_WAVE_LENGTH)
 			this.wavelength = MIN_WAVE_LENGTH;
 		else
@@ -117,42 +119,35 @@ public class Planet
 		this.atmosphere = atmosphere;
 	}
 
-	public float getRadius()
-	{
-		return planetSurface.getRadius();
+	public float getRadius() {
+		return radius;
 	}
 
-	public Vector3f getPosition()
-	{
+	public Vector3f getPosition() {
 		return position;
 	}
 
-	public int getTotalTriangleCount()
-	{
+	public int getTotalTriangleCount() {
 		return planetSurface.getTriangleCount();
 	}
 
-	public int getVertexCount() 
-	{
+	public int getVertexCount() {
 		return planetSurface.getVertexCount();
 	}
 
-	public Atmosphere getAtmosphere()
-	{
+	public Atmosphere getAtmosphere() {
 		return atmosphere;
 	}
 
-	public WaterSurface getWaterSurface(){
+	public WaterSurface getWaterSurface() {
 		return waterSurface;
 	}
 
-	public DynamicSphere getPlanetSurface()
-	{
+	public DynamicSphere getPlanetSurface() {
 		return planetSurface;
 	}
 
-	public float getLambda(float planetRadius)
-	{
+	public float getLambda(float planetRadius) {
 		return wavelength * planetRadius;
 	}
 			

@@ -60,8 +60,7 @@ public class DynamicSphere extends MeshObject
 		int[] t = createOctahedron();
 		triangleIndexCount = t.length;
 		int depth = 0;
-		while(triangleIndexCount < minTriangles * 3)
-		{
+		while(triangleIndexCount < minTriangles * 3) {
 			t = subdivide(t, triangleIndexCount, depth++, modelViewMatrix);
 			if(t.length == 0)
 				break;
@@ -126,8 +125,8 @@ public class DynamicSphere extends MeshObject
 		Vector3f.add(orthoVec2, pos, orthoVec2);
 		orthoVec1.normalise(orthoVec1);
 		orthoVec2.normalise(orthoVec2);
-		orthoVec1.scale(getRadius());
-		orthoVec2.scale(getRadius());
+		orthoVec1.scale(planet.getRadius());
+		orthoVec2.scale(planet.getRadius());
 		createNoise(orthoVec1);
 		createNoise(orthoVec2);
 		Vector3f.sub(orthoVec1, pos, orthoVec1);
@@ -147,7 +146,7 @@ public class DynamicSphere extends MeshObject
 	}
 
 	public void createNoise(Vector3f v) {
-		double lambda = planet.getWavelength() * getRadius();
+		double lambda = planet.getWavelength() * planet.getRadius();
 		double noiseSeed = planet.getNoiseSeed();
 		int octaves = planet.getOctaves();
 		double amplitude = planet.getAmplitude();
@@ -385,11 +384,7 @@ public class DynamicSphere extends MeshObject
 		dot /= v1.length() * n1.length();
 		return dot > ANGLE_TOLERANCE;
 	}
-	
-	public float getRadius() {
-		return radius;
-	}
-	
+		
 	public Matrix4f getModelMatrix() {
 		return modelMatrix;
 	}

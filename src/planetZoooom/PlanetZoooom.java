@@ -65,7 +65,7 @@ public class PlanetZoooom implements Game
 	private static final float[] HUD_BG_PURPLE = new float[] {0.73f, 0.47f, 0.8f, 0.9f};
 
 	private static final Vector3f SUN_POSITION = new Vector3f(-500.0f, 0.0f, 0.0f);
-	private static final Vector3f CAM_START_POSITION = new Vector3f(0.0f, 0.0f, 200.0f);
+	private static final Vector3f CAM_START_POSITION = new Vector3f(0.0f, 0.0f, 300.0f);
 	private static final float CAM_COLLISION_OFFSET = 2.0f;
 	private static final float AMBIENT_LIGHT_STRENGTH = 0.1f;
 
@@ -144,7 +144,7 @@ public class PlanetZoooom implements Game
 
 	@Override
 	public void render(){
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //DO NOT MOVE THIS LINE! ....THERE IS A REASON THAT IT IS NOT IN RENDERER;
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if(freezeUpdate) {
 			glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -156,6 +156,14 @@ public class PlanetZoooom implements Game
 		// check if rendered (inFrustum, debug, freeze, etc) and add to render list
 		// sort render list by distance
 		// render list content
+
+		// for (MeshObject mesh : meshes){
+		// 	//TOTO: check if visible / infrustum
+		// 	//update distance
+		// 	float distance = GameUtils.getDistanceBetween(mesh.getPosition(), Info.camera.getPosition());
+		// 	mesh.setDistanceToCam(distance);
+		// }
+		// meshes.sort( (a, b) -> { return a.compareTo(b); } );
 
 		drawSun();	
 		drawPlanet();
@@ -177,16 +185,17 @@ public class PlanetZoooom implements Game
 		Matrix4f.mul(Info.camera.getViewMatrix(), planet.getPlanetSurface().getModelMatrix(), modelViewMatrix);
 	
 		drawPlanetSurface();
-
+		
 		if(!freezeUpdate) {
 			glFrontFace(GL_CW);
 			drawAtmosphere();
 			glFrontFace(GL_CCW);
-
+			
 			if(planet.getHasWater()) {
 				drawWaterSurface();
 			}
 		}
+		
 	}
 
 	private void drawAtmosphere() {
@@ -217,7 +226,7 @@ public class PlanetZoooom implements Game
 			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 			wireFrameShader.loadUniform1f(0.5f, "greytone");
 			planet.getAtmosphere().getSphere().render(GL_LINES);
-			wireFrameShader.loadUniform1f(0.8f, "greytone");
+			wireFrameShader.loadUniform1f(0.9f, "greytone");
 			planet.getAtmosphere().getSphere().render(GL_POINTS);
 			glDepthFunc(GL_LESS);
 		}
@@ -364,7 +373,7 @@ public class PlanetZoooom implements Game
 				+ "Vertices:     %d\n"
 				+ "Subdivisions: %d\n"
 				+ "FPS:          %d",
-				GameUtils.getDistanceBetween(planet.getPosition(), Info.camera.getPosition()) - planet.getRadius(), 
+				GameUtils.getDistanceBetween(planet.getPosition(), Info.camera.getPosition()), 
 				triangleCount, totalTriangleCount, trianglePercentage,
 				planet.getPlanetSurface().getVertexCount(),
 				planet.getPlanetSurface().getSubdivisions(),
@@ -432,9 +441,9 @@ public class PlanetZoooom implements Game
 		switch(hudMode) {
 			case HUD_MODE_NOISE: {
 				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_O))
-					planet.setAmplitude(planet.getAmplitude() + 0.02f);
+					planet.setAmplitude(planet.getAmplitude() + 0.005f);
 				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_L))
-					planet.setAmplitude(planet.getAmplitude() - 0.02f);
+					planet.setAmplitude(planet.getAmplitude() - 0.005f);
 				
 				if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_I))
 					planet.setOctaves(planet.getOctaves() + 1);
@@ -445,11 +454,6 @@ public class PlanetZoooom implements Game
 					planet.setWavelength(planet.getWavelength() + 0.005f);
 				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_J))
 					planet.setWavelength(planet.getWavelength() - 0.005f);
-				
-				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_Y))
-					planet.setNoiseSeed(planet.getNoiseSeed() + 1);
-				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_H))
-					planet.setNoiseSeed(planet.getNoiseSeed() - 1);
 				break;
 			}
 			case HUD_MODE_ATMOSPHERE: {
