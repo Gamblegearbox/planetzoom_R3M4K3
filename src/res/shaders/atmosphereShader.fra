@@ -1,30 +1,27 @@
-#version 330 
+#version 330
+#pragma debug(on)
+#pragma optimize(off)
 
-out vec4 out_Color; 
+const float PI = 3.14159265f;
 
-uniform float miePhaseAsymetryFactor;
+in vec3 v_position;
+in vec3 v_normal;
+in vec2 v_uv;
+
+out vec4 out_Color;
+
+uniform float radius;
+uniform vec3 cameraPosition;
 uniform vec3 lightPosition;
+uniform float ambientLight;
 
-in vec3 pass_color;
-in vec3 pass_color2;
-in vec3 direction;
 
-//Henyey-Greenstein phase function
-float phase(float scatteringSymetrie) // parameter = g
-{
-	float gSquared = scatteringSymetrie * scatteringSymetrie;
-	float cos = dot(lightPosition, direction) / length(direction); //cos(theta); 
-	float fMiePhase = 1.5 * ((1.0 - gSquared) / (2.0 + gSquared)) * (1.0 + cos * cos); 
-	fMiePhase /= pow(1.0 + gSquared - 2.0 * scatteringSymetrie * cos, 1.5);
+void main(void) {	
+ 	float ambient = ambientLight;
+	vec3 normal = v_normal;
+	vec3 lightDir = normalize(lightPosition - v_position);
+	float diffuse = max(dot(normal, lightDir), 0.0);
+
+	out_Color = vec4(vec3(diffuse * 0.35, diffuse, diffuse * 2.0), diffuse);
 	
-	return fMiePhase;
-}
-
-void main(void)
-{
-	float fMiePhase = phase(miePhaseAsymetryFactor);
-
-	vec3 tmp = (pass_color + fMiePhase * pass_color2)/2;
-	out_Color = vec4(tmp, tmp.x + tmp.y + tmp.z);
-
 }

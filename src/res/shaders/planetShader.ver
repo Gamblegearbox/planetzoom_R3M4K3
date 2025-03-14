@@ -10,20 +10,18 @@ layout (location = 1) in vec2 uvCoords;
 layout (location = 2) in vec3 normal;
 layout (location = 3) in vec4 color;
 
-out DATA {
-	vec3 position;
-	vec3 normal;
-	vec2 uv;
-} pass_data;
+out vec3 v_position;
+out vec3 v_normal;
+out vec2 v_uv;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 normalMatrix;
 
 void main(void) {
-	pass_data.position = position;
-	pass_data.normal = normalize(mat3(normalMatrix) * normal);
-	pass_data.uv = uvCoords;
+	v_position = position;
+	v_normal = normalize(mat3(normalMatrix) * normal);
+	v_uv = uvCoords;
 
 	gl_Position = (projectionMatrix * modelViewMatrix) * vec4(position, 1.0);
 }

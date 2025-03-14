@@ -1,5 +1,6 @@
 package planetZoooom.geometry;
 
+import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -8,26 +9,29 @@ import planetZoooom.engine.VertexArray;
 
 public class StaticSphere extends MeshObject
 {
-	private float radius;
+
 	private Vector3f[] verticesVec;
 	private Vector2f[] uvCoordsVec;
 	
-	private static Vector3f[] directions = { Vertex.left(), Vertex.back(),
-			Vertex.right(), Vertex.front() };
+	private static Vector3f[] directions = { Vertex.left(), Vertex.back(), Vertex.right(), Vertex.front() };
 
-	public StaticSphere(int subdivisions, float radius) {
-		this.radius = radius;
+	public StaticSphere(int subdivisions, float radius, boolean deforms) {
 		int resolution = 1 << subdivisions;
+		
+		this.position = new Vector3f(0.0f, 0.0f, 0.0f);
+		this.modelMatrix = new Matrix4f().translate(position);
 		verticesVec = new Vector3f[(resolution + 1) * (resolution + 1) * 4 - (resolution * 2 - 1) * 3];
 		uvCoordsVec = new Vector2f[verticesVec.length];
 		indices = new int[(1 << (subdivisions * 2 + 3)) * 3];
-	
+		vertices = new float[verticesVec.length * 3]; 
+		uvCoords = new float[verticesVec.length * 2];
+
+		
 		createOctahedron(resolution);
 		normalizeVerticesAndCreateNormals();
 		createUVs();
-		applyMeshModifications();
-		createVerticesAndUVFloatArrays();
-	
+		applyMeshModifications(radius, deforms);
+
 		mesh = new VertexArray(vertices, normals, uvCoords, indices);
 	}
 
@@ -134,11 +138,9 @@ public class StaticSphere extends MeshObject
 		}
 	}
 	
-	private void createUVs()
-	{
+	private void createUVs() {
 		float previousX = 1f;
-		for (int i = 0; i < verticesVec.length; i++)
-		{
+		for (int i = 0; i < verticesVec.length; i++) {
 			Vector3f vector = new Vector3f(verticesVec[i]);
 			if (vector.x == previousX) {
 				uvCoordsVec[i - 1].x = 1f;
@@ -147,8 +149,7 @@ public class StaticSphere extends MeshObject
 			Vector2f texCoords = new Vector2f();
 			texCoords.x = (float) Math.atan2(vector.x, vector.z)
 					/ (-2f * (float) Math.PI);
-			if (texCoords.x < 0)
-			{
+			if (texCoords.x < 0) {
 				texCoords.x += 1f;
 			}
 			texCoords.y = (float) Math.asin(vector.y) / (float) Math.PI + 0.5f;
@@ -158,36 +159,49 @@ public class StaticSphere extends MeshObject
 		uvCoordsVec[verticesVec.length - 3].x = uvCoordsVec[1].x = 0.375f;
 		uvCoordsVec[verticesVec.length - 2].x = uvCoordsVec[2].x = 0.625f;
 		uvCoordsVec[verticesVec.length - 1].x = uvCoordsVec[3].x = 0.875f;
-	}
-
-	public void applyMeshModifications()
-	{
-		for(int i = 0; i < verticesVec.length; i++)
-			verticesVec[i].scale((float) (radius));
-	}
-	
-	private void createVerticesAndUVFloatArrays() {
-		vertices = new float[verticesVec.length * 3]; 
-		uvCoords = new float[verticesVec.length * 2];
-
-		for (int i = 0; i < verticesVec.length; i++)
-		{
-			vertices[i * 3    ] = verticesVec[i].x;
-			vertices[i * 3 + 1] = verticesVec[i].y;
-			vertices[i * 3 + 2] = verticesVec[i].z;
-					
+		
+		for (int i = 0; i < verticesVec.length; i++) { //TODO: optimize (write in the loop above)
 			uvCoords[i * 2    ] = uvCoordsVec[i].x;
 			uvCoords[i * 2 + 1] = uvCoordsVec[i].y;
 		}
 	}
+
+	public void applyMeshModifications(float radius, boolean deforms) {
+		//TODO: just to get started, propert terrain creation might go here
+
+		if (deforms) {
+			float maxHeight = 4.0f;
+			float maxSine = 20f;
+			
+			for(int i = 0; i < verticesVec.length; i++){
+				float sinMod = (float) (Math.random()) * maxSine;
+				float heightMod = (float) (Math.random()) * maxHeight;
+				float xMod = (float) Math.sin(verticesVec[i].x * sinMod) * heightMod;
+				float yMod = (float) Math.sin(verticesVec[i].y * sinMod) * heightMod;
+				float zMod =(float) Math.sin(verticesVec[i].z * sinMod) * heightMod;
+
+				vertices[i * 3    ] = verticesVec[i].x * (radius + xMod + yMod + zMod);
+				vertices[i * 3 + 1] = verticesVec[i].y * (radius + xMod + yMod + zMod);
+				vertices[i * 3 + 2] = verticesVec[i].z * (radius + xMod + yMod + zMod);
+			}
+		} 
+		else {
+			for(int i = 0; i < verticesVec.length; i++) {
+				vertices[i * 3    ] = verticesVec[i].x * radius;
+				vertices[i * 3 + 1] = verticesVec[i].y * radius;
+				vertices[i * 3 + 2] = verticesVec[i].z * radius;
+			}
+		}
+	}
+
+	public void updateMeshData(){
+		mesh.update(vertices, normals, uvCoords, indices);
+	}
+
 	
-	public void render(int mode)
-	{
+	public void render(int mode){
 		mesh.render(mode);
 	}
 	
-	public float getRadius()
-	{
-		return radius;
-	}
+
 }

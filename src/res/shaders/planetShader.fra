@@ -1,0 +1,59 @@
+//https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php
+//http://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
+
+#version 330
+#pragma debug(on)
+#pragma optimize(off)
+
+const float PI = 3.14159265f;
+
+in vec3 v_position;
+in vec3 v_normal;
+in vec2 v_uv;
+
+out vec4 out_Color;
+
+uniform float radius;
+uniform vec3 cameraPosition;
+uniform vec3 lightPosition;
+uniform float ambientLight;
+
+void main(void) {	
+	float height = length(v_position) - radius;
+	float maxHeight = 10.0; //TODO: define max-height like this?
+
+	float heightGradient = height / maxHeight; 
+ 
+ 	float ambient = ambientLight;
+	vec3 normal = v_normal;
+	vec3 lightDir = normalize(lightPosition - v_position);
+	float diffuse = max(dot(normal, lightDir), 0.0);
+
+	// COLOR BORDERS
+	float snow = 0.6;
+	float stone = 0.2;
+	float grass = 0.05;
+
+	vec3 colorSand  = vec3( 0.89, 0.78, 0.41 );
+	vec3 colorGrass = vec3( 0.22, 0.58, 0.28 );
+	vec3 colorStone = vec3( 0.50, 0.56, 0.39 );
+	vec3 colorSnow  = vec3( 0.87, 0.90, 0.89 );
+
+	float mask1 = step(grass, heightGradient); 
+	float mask2 = step(stone, heightGradient);
+	float mask3 = step(snow, heightGradient);
+
+	vec3 heightColor;
+	heightColor = mix(colorSand, colorGrass, mask1);
+	heightColor = mix(heightColor, colorStone, mask2);
+	heightColor = mix(heightColor, colorSnow, mask3);
+
+	float lightResult = ambient + diffuse;
+
+	float heightLines = smoothstep(0.99, 1.0, sin(heightGradient * 80.0));
+	heightColor *= (diffuse + ambient) - heightLines * 0.1;
+
+
+	out_Color = vec4(heightColor, 1.0);
+	
+}
