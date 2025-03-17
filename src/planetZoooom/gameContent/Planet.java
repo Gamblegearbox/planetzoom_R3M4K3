@@ -26,7 +26,7 @@ public class Planet
 		this.position = position;
 		this.hasWater = (float) (Math.random()) > 0.5f;
 		this.planetSurface = new StaticSphere(subdivisions, radius, true);
-		this.atmosphere = new StaticSphere(subdivisions - 2, radius * 1.3f, false);
+		this.atmosphere = new StaticSphere(subdivisions - 1, radius * 1.3f, false);
 		this.waterSurface = new StaticSphere(subdivisions - 2, radius, false);
 		
 		float random = (float) (Math.random());

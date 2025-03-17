@@ -1,14 +1,15 @@
 package planetZoooom.utils;
 
-import org.lwjgl.util.vector.Matrix4f;
-import planetZoooom.gameContent.Planet;
 import planetZoooom.interfaces.Camera;
 
 public class Info
 {
-	public static Planet planet; //where is this needed - only one instance?
+
 	public static Camera camera;
-	
+	public static int[] gameRes = new int[] {800, 600};
+	public static float fov;
+	public static int fps;
 	//public static Matrix4f viewMatrix;
-	public static Matrix4f projectionMatrix;
+
+	
 }

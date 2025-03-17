@@ -9,44 +9,50 @@ import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWvidmode;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.util.vector.Matrix4f;
 
 import planetZoooom.input.Cursor;
 import planetZoooom.input.Keyboard;
 import planetZoooom.interfaces.Game;
+import planetZoooom.utils.Info;
+import planetZoooom.utils.MatrixUtils;
 import planetZoooom.utils.Timer;
 
 public class CoreEngine
 {
     private final Game game;
+
+    public static Matrix4f projectionMatrix;
+    public static Matrix4f orthographicProjectionMatrix;
+
+    private float fovParam = 45.0f;
+
     public boolean running;
     public long windowHandle;
   
     boolean fullscreen = false;
-    
-    private int windowWidth = 800; 
-    private int windowHeight = 600;
     
     private GLFWKeyCallback keyCallback;
     private GLFWCursorPosCallback cursorCallback;
 
     public Timer timer;
     
-    public CoreEngine(Game game){
+    public CoreEngine(Game game) {
         this.game = game;
+
+        projectionMatrix = MatrixUtils.perspectiveProjectionMatrix(fovParam, Info.gameRes[0], Info.gameRes[1]);
+        orthographicProjectionMatrix = MatrixUtils.orthographicProjectionMatrix(0, -Info.gameRes[0], -Info.gameRes[1], 0.0f, -1.0f, 1.0f);
     }
 
-    public void start()
-    {
+    public void start() {
         running = true;
 
         init();
 
-        while(running)
-        {
+        while(running) {
             update();
 
-            if(glfwWindowShouldClose(windowHandle) == GL_TRUE)
-            {
+            if(glfwWindowShouldClose(windowHandle) == GL_TRUE) {
                 running = false;
             }
         }
@@ -55,8 +61,7 @@ public class CoreEngine
         cursorCallback.release();
     }
 
-    public void init()
-    {
+    public void init() {
         if(glfwInit() != GL_TRUE)
         {
             System.err.println("can't initialize GLFW");
@@ -70,23 +75,17 @@ public class CoreEngine
     	GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     	GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    	if(fullscreen)
-    	{
+    	if(fullscreen) {
     		long monitor = glfwGetPrimaryMonitor();
     		GLFWvidmode mode = new GLFWvidmode(glfwGetVideoMode(monitor));
     		
-    		windowWidth = mode.getWidth();
-    		windowHeight = mode.getHeight();
-    		
-    		windowHandle = glfwCreateWindow(windowWidth, windowHeight, "Stare into it device: " + windowHandle, monitor, NULL);
+    		windowHandle = glfwCreateWindow(mode.getWidth(), mode.getHeight(), "Stare into it device: " + windowHandle, monitor, NULL);
        	} 
-    	else 
-    	{
-    		windowHandle = glfwCreateWindow(windowWidth, windowHeight, "Stare into it device: " + windowHandle, NULL, NULL);	
+    	else {
+    		windowHandle = glfwCreateWindow(Info.gameRes[0], Info.gameRes[1], "Stare into it device: " + windowHandle, NULL, NULL);	
     	}
         
-        if(windowHandle == NULL)
-        {
+        if(windowHandle == NULL) {
             System.err.println("Window creation failed");
         }
         
@@ -108,10 +107,11 @@ public class CoreEngine
         timer = new Timer(); //not sure if best here
     }
 
-    public void update()
-    {
+    public void update() {
         glfwPollEvents();
    
+        Info.fov = fovParam;
+        Info.fps = timer.getFPS();
         game.update(timer.getDeltaTime());
         game.render();
         
@@ -120,12 +120,5 @@ public class CoreEngine
         
         glfwSwapBuffers(windowHandle);
     }
-    
-    public int getWindowWidth() {
-		return windowWidth;
-	}
 
-	public int getWindowHeight() {
-		return windowHeight;
-	}
 }

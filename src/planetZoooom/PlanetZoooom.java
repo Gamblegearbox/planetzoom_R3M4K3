@@ -17,7 +17,6 @@ import planetZoooom.input.Keyboard;
 import planetZoooom.interfaces.Game;
 import planetZoooom.utils.GameUtils;
 import planetZoooom.utils.Info;
-import planetZoooom.utils.MatrixUtils;
 
 public class PlanetZoooom implements Game 
 {
@@ -31,9 +30,6 @@ public class PlanetZoooom implements Game
 	private static final Vector3f CAM_START_POSITION = new Vector3f(0.0f, 0.0f, 300.0f);
 	private static final float CAM_COLLISION_OFFSET = 2.0f;
 	private static final float AMBIENT_LIGHT_STRENGTH = 0.1f;
-
-	private static CoreEngine coreEngine;
-	private float fovParam = 45.0f;
 
 	// GAMEOBJECTS
 	private Planet planet;
@@ -52,7 +48,7 @@ public class PlanetZoooom implements Game
 	// MATRICES
 	private Matrix4f modelViewMatrix;
 	private Matrix4f normalMatrix;
-	private Matrix4f orthographicProjectionMatrix;
+	//private Matrix4f orthographicProjectionMatrix;
 	private Vector3f lightDirection;
 	
 	// CONTROLS
@@ -62,28 +58,20 @@ public class PlanetZoooom implements Game
 	private int hudMode;
 	private Vector3f planetToCam;
 	
-	public static void main(String[] args) {
-		coreEngine = new CoreEngine(new PlanetZoooom());
-		coreEngine.start();
-	}
-
 	@Override
 	public void init() {
 		printVersionInfo();
 		planetToCam = new Vector3f();
 		Info.camera = new FreeCamera(new Vector3f(CAM_START_POSITION.x, CAM_START_POSITION.y, CAM_START_POSITION.z));
-		Info.projectionMatrix = planetZoooom.utils.MatrixUtils.perspectiveProjectionMatrix(fovParam, coreEngine.getWindowWidth(), coreEngine.getWindowHeight());
 		
 		modelViewMatrix = new Matrix4f();
 		normalMatrix = new Matrix4f();
-		orthographicProjectionMatrix = MatrixUtils.orthographicProjectionMatrix(0, -coreEngine.getWindowWidth(), -coreEngine.getWindowHeight(), 0.0f, -1.0f, 1.0f);
 		lightDirection = new Vector3f();
 		
 		initOpenGL();
 		initShaders();
 		initGameObjects();
 
-		Info.planet = planet;
 		hudMode = 0;
 	}
 
@@ -150,7 +138,7 @@ public class PlanetZoooom implements Game
 		Matrix4f.mul(Info.camera.getViewMatrix(), sun.getModelMatrix(), modelViewMatrix);
 	
 		glUseProgram(sunShader.getId());
-		sunShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		sunShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 		sunShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		sunShader.loadUniform1f(time, "time");
 
@@ -178,7 +166,7 @@ public class PlanetZoooom implements Game
 		lightDirection.normalise();
 		
 		glUseProgram(atmosphereShader.getId());
-		atmosphereShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		atmosphereShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 		atmosphereShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		atmosphereShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
 		atmosphereShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
@@ -192,7 +180,7 @@ public class PlanetZoooom implements Game
 		{
 			glDepthFunc(GL_LEQUAL);
 			glUseProgram(wireFrameShader.getId());
-			wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+			wireFrameShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 			wireFrameShader.loadUniform1f(0.5f, "greytone");
 			planet.getAtmosphere().render(GL_LINES);
@@ -206,7 +194,7 @@ public class PlanetZoooom implements Game
 		Matrix4f.invert(planet.getPlanetSurface().getModelMatrix(), normalMatrix);
 
 		glUseProgram(planetShader.getId());
-		planetShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		planetShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 		planetShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		planetShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
 		planetShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
@@ -219,7 +207,7 @@ public class PlanetZoooom implements Game
 		if(wireframe) {
 			glDepthFunc(GL_LEQUAL);
 			glUseProgram(wireFrameShader.getId());
-			wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+			wireFrameShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 			wireFrameShader.loadUniform1f(0.5f, "greytone");
 			planet.getPlanetSurface().render(GL_LINES);
@@ -233,7 +221,7 @@ public class PlanetZoooom implements Game
 		Matrix4f.invert(planet.getWaterSurface().getModelMatrix(), normalMatrix);
 
 		glUseProgram(waterShader.getId());
-		waterShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+		waterShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 		waterShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 		waterShader.loadUniformMat4f(normalMatrix, "normalMatrix", true);
 		waterShader.loadUniformVec3f(SUN_POSITION, "lightPosition");
@@ -246,7 +234,7 @@ public class PlanetZoooom implements Game
 		if(wireframe) {
 			glDepthFunc(GL_LEQUAL);
 			glUseProgram(wireFrameShader.getId());
-			wireFrameShader.loadUniformMat4f(Info.projectionMatrix, "projectionMatrix", false);
+			wireFrameShader.loadUniformMat4f(CoreEngine.projectionMatrix, "projectionMatrix", false);
 			wireFrameShader.loadUniformMat4f(modelViewMatrix, "modelViewMatrix", false);
 			wireFrameShader.loadUniform1f(0.5f, "greytone");
 			planet.getWaterSurface().render(GL_LINES);
@@ -259,7 +247,7 @@ public class PlanetZoooom implements Game
 	private void drawHUD() {
 		glUseProgram(colorShader.getId());
 		{
-			colorShader.loadUniformMat4f(orthographicProjectionMatrix, "projectionMatrix", false);
+			colorShader.loadUniformMat4f(CoreEngine.orthographicProjectionMatrix, "projectionMatrix", false);
 			colorShader.loadUniformMat4f(hud.getModelMatrix(), "modelViewMatrix", false);
 			hud.getBackgroundMesh().render(GL_TRIANGLES);
 		}
@@ -267,7 +255,7 @@ public class PlanetZoooom implements Game
 
 		glUseProgram(hudShader.getId());
 		{
-			hudShader.loadUniformMat4f(orthographicProjectionMatrix, "projectionMatrix", false);
+			hudShader.loadUniformMat4f(CoreEngine.orthographicProjectionMatrix, "projectionMatrix", false);
 			hudShader.loadUniformMat4f(hud.getModelMatrix(), "modelViewMatrix", false);
 			hud.getTextMesh().render(GL_TRIANGLES);
 		}
@@ -299,9 +287,9 @@ public class PlanetZoooom implements Game
 				+ "Subdivisions: %d\n"
 				+ "FPS:          %d",
 				GameUtils.getDistanceBetween(planet.getPosition(), Info.camera.getPosition()), 
-				fovParam,
+				Info.fov,
 				planet.getSubdivisions(),
-				coreEngine.timer.getFPS());
+				Info.fps);
 	}
 			
 	private void printVersionInfo() {
@@ -325,10 +313,10 @@ public class PlanetZoooom implements Game
 		
 		switch(hudMode) {
 			case HUD_MODE_INFO: {
-				if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_O))
-					fovParam = fovParam + 0.005f;
-				else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_L))
-					fovParam = fovParam - 0.005f;
+				// if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_O))
+				// 	//fovParam = fovParam + 0.005f;
+				// else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_L))
+				// 	//fovParam = fovParam - 0.005f;
 				break;
 			}
 		}
