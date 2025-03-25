@@ -9,11 +9,17 @@ import planetZoooom.engine.VertexArray;
 
 public class StaticSphere extends MeshObject
 {
+	private static final Vector3f FRONT = new Vector3f(0, 0, 1);
+	private static final Vector3f BACK = new Vector3f(0, 0, -1);
+	private static final Vector3f UP = new Vector3f(0, 1, 0);
+	private static final Vector3f DOWN = new Vector3f(0, -1, 0);
+	private static final Vector3f LEFT = new Vector3f(-1, 0, 0);
+	private static final Vector3f RIGHT = new Vector3f(1, 0, 0);
 
 	private Vector3f[] verticesVec;
 	private Vector2f[] uvCoordsVec;
 	
-	private static Vector3f[] directions = { Vertex.left(), Vertex.back(), Vertex.right(), Vertex.front() };
+	private static Vector3f[] directions = { LEFT, BACK, RIGHT, FRONT };
 
 	public StaticSphere(int subdivisions, float radius, boolean deforms) {
 		int resolution = 1 << subdivisions;
@@ -40,18 +46,18 @@ public class StaticSphere extends MeshObject
 		int vBottom = 0;
 		int t = 0;
 		for (int i = 0; i < 4; i++) {
-			verticesVec[v++] = Vertex.down();
+			verticesVec[v++] = DOWN;
 		}
 		// LOWERSPHERE
 		for (int i = 1; i <= resolution; i++) {
 			float progress = (float) i / resolution;
 			Vector3f from;
 			Vector3f to;
-			verticesVec[v++] = to = Vertex.lerp(Vertex.down(),
-					Vertex.front(), progress);
+			verticesVec[v++] = to = lerp(DOWN,
+					FRONT, progress);
 			for (int d = 0; d < 4; d++) {
 				from = to;
-				to = Vertex.lerp(Vertex.down(), directions[d], progress);
+				to = lerp(DOWN, directions[d], progress);
 				t = createLowerStrip(i, v, vBottom, t);
 				v = createVertexLine(from, to, i, v);
 				vBottom += i > 1 ? (i - 1) : 1;
@@ -63,12 +69,12 @@ public class StaticSphere extends MeshObject
 			float progress = (float) i / resolution;
 			Vector3f from;
 			Vector3f to;
-			verticesVec[v++] = to = Vertex.lerp(Vertex.up(), Vertex.front(),
+			verticesVec[v++] = to = lerp(UP, FRONT,
 					progress);
 			for (int d = 0; d < 4; d++)
 			{
 				from = to;
-				to = Vertex.lerp(Vertex.up(), directions[d], progress);
+				to = lerp(UP, directions[d], progress);
 				t = createUpperStrip(i, v, vBottom, t);
 				v = createVertexLine(from, to, i, v);
 				vBottom += i + 1;
@@ -79,7 +85,7 @@ public class StaticSphere extends MeshObject
 			indices[t++] = vBottom;
 			indices[t++] = v;
 			indices[t++] = ++vBottom;
-			verticesVec[v++] = Vertex.up();
+			verticesVec[v++] = UP;
 		}
 	}
 
@@ -87,7 +93,7 @@ public class StaticSphere extends MeshObject
 	{
 		for (int i = 1; i <= steps; i++)
 		{
-			verticesVec[v++] = Vertex.lerp(from, to, (float) i / steps);
+			verticesVec[v++] = lerp(from, to, (float) i / steps);
 		}
 		return v;
 	}
@@ -203,5 +209,13 @@ public class StaticSphere extends MeshObject
 		mesh.render(mode);
 	}
 	
+	public static Vector3f lerp(Vector3f a, Vector3f b, float step)
+	{
+		float x = a.x + (b.x - a.x) * step; 
+		float y = a.y + (b.y - a.y) * step; 
+		float z = a.z + (b.z - a.z) * step; 
+		
+		return new Vector3f(x, y, z);
+	}
 
 }

@@ -26,6 +26,11 @@ public class VertexArray
 	public static final int NORMAL_LOCATION = 2;
 	public static final int COLOR_LOCATION = 3;
 	
+	public VertexArray(float[] vertices, float[] colors, int[] indices) {
+		initBufferHandles();
+		doBufferStuff(vertices, colors, indices);
+	}
+
 	public VertexArray(float[] vertices, float[] normals, float[] uvCoords, int[] indices) {
 		initBufferHandles();
 		doBufferStuff(vertices, normals, uvCoords, indices);
@@ -35,13 +40,16 @@ public class VertexArray
 		initBufferHandles();
 		doBufferStuff(vertices, normals, uvCoords, colors, indices);
 	}
+
+	public void update(float[] vertices, float[] colors, int[] indices) {
+		doBufferStuff(vertices, colors, indices);
+	}
 	
 	public void update(float[] vertices, float[] normals, float[] uvCoords, int[] indices) {
 		doBufferStuff(vertices, normals, uvCoords, indices);
 	}
 	
-	public void update(float[] vertices, float[] normals, float[] uvCoords, float[] colors, int[] indices)
-	{
+	public void update(float[] vertices, float[] normals, float[] uvCoords, float[] colors, int[] indices) {
 		doBufferStuff(vertices, normals, uvCoords, colors, indices);
 	}
 	
@@ -62,6 +70,23 @@ public class VertexArray
 		glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
 		glVertexAttribPointer(location, stride, GL_FLOAT, normalize, 0, 0);
 		glEnableVertexAttribArray(location);
+	}
+
+	private void doBufferStuff(float[] vertices, float[] colors, int[] indices) {
+		count = indices.length;
+		
+		glBindVertexArray(vaoHandle);
+		fillFloatBuffer(vboHandle, vertices, VERTEX_LOCATION, 3, false);
+		fillFloatBuffer(colorHandle, colors, COLOR_LOCATION, 4, false);
+		
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboHandle);
+		IntBuffer indexBuffer = BufferUtils.createIntBuffer(indices.length);
+		indexBuffer.put(indices).flip();
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+		
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 
 	private void doBufferStuff(float[] vertices, float[] normals, float[] uvCoords, int[] indices) {

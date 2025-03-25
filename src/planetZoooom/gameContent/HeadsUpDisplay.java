@@ -2,6 +2,7 @@ package planetZoooom.gameContent;
 
 import org.lwjgl.util.vector.Matrix4f;
 
+import planetZoooom.geometry.Rectangle2D;
 import planetZoooom.geometry.HUDText;
 
 public class HeadsUpDisplay
@@ -26,46 +27,34 @@ public class HeadsUpDisplay
 		this.text = new HUDText("", font, position_x, position_y, 16);
 	}
 	
-	public HeadsUpDisplay(int x, int y, String font, float[] backgroundColor) {
+	public HeadsUpDisplay(int x, int y, String font) {
 		position_x = x;
 		position_y = y;
 		this.font = font;
 		this.text = new HUDText("", font, position_x + CONTENT_MARGIN, position_y + CONTENT_MARGIN, 16);
-		this.background = new Rectangle2D(position_x, position_y, 400, 300);
-		background.setColor(backgroundColor);
 
+		float[][] bgColors = new float[][] {
+			Colors.WHITE,
+			Colors.BLUE,
+			Colors.GREEN,
+			Colors.YELLOW
+		};
+		this.background = new Rectangle2D(position_x, position_y, 200, 40, bgColors);
 	}
 	
 	public void update(String text) {
 		this.text.update(text);
-		this.background.setWidth(this.text.getMaxWidth() + CONTENT_MARGIN); 
-		this.background.setHeight(this.text.getMaxHeight() + CONTENT_MARGIN); 
-		this.background.update();
 	}
 	
-	public HUDText getTextMesh()
-	{
+	public HUDText getTextMesh() {
 	    return text;
 	}
 	
-	public Rectangle2D getBackgroundMesh()
-	{
+	public Rectangle2D getBackgroundMesh() {
 		return background;
 	}
 	
-	public void setBackgroundColor(float[] backgroundColor) {
-		this.background.setColor(backgroundColor);
-	}
-	
-	public Matrix4f getModelMatrix()
-	{
+	public Matrix4f getModelMatrix() {
 		return modelMatrix;
 	}
-
-	public void setFont(String font)
-	{
-	    this.font = font;
-	    text.setFont(font);
-	}
-
 }

@@ -1,6 +1,6 @@
 package planetZoooom.utils;
 
-import planetZoooom.interfaces.Camera;
+import planetZoooom.engine.Camera;
 
 public class Info
 {

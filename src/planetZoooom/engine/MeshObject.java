@@ -53,6 +53,5 @@ public abstract class MeshObject
 		modelMatrix.m30 = position.x;
 		modelMatrix.m31 = position.y;
 		modelMatrix.m32 = position.z;
-	}
-	
+	}	
 }
