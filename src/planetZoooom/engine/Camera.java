@@ -224,7 +224,7 @@ public class Camera
 		this.position = position;
 	}
 
-	public void handleInput(float deltaTime) {
+	public void update(float deltaTime) {
 		boostEnabled = Keyboard.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
 
 		if(boostEnabled)

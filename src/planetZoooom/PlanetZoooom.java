@@ -92,7 +92,15 @@ public class PlanetZoooom implements Game
 	public void update(float deltaTime) {
 		time += deltaTime;
 
-		this.processKeyboardInputs(deltaTime);
+		Info.camera.update(deltaTime);
+		playerShip.update(deltaTime);
+		
+		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_5)){ wireframe = !wireframe; }
+		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_TAB)){ 
+			hudMode = (hudMode+1) % 2; 
+			updateHud(hudMode);	
+		}
+		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_ENTER)){ shoot(); }
 		for (int i = 0; i < bullets.length; i++) {
 			bullets[i].update(deltaTime);
 		}
@@ -200,7 +208,6 @@ public class PlanetZoooom implements Game
 		
 		throw new IllegalArgumentException();
 	}
-	
 			
 	private void printVersionInfo() {
 		System.out.println("GPU Vendor: " + glGetString(GL_VENDOR));
@@ -214,28 +221,6 @@ public class PlanetZoooom implements Game
 			if (bullets[i].getIsActive() == false) {
 				bullets[i].setIsActive(playerShip.getPosition());
 				return;
-			}
-		}
-	}
-	
-	private void processKeyboardInputs(float deltaTime) {
-		
-		Info.camera.handleInput(deltaTime);
-		
-		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_5)){ wireframe = !wireframe; }
-		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_TAB)){ 
-			hudMode = (hudMode+1) % 2; 
-			updateHud(hudMode);	
-		}
-		if(Keyboard.isKeyPressedWithReset(GLFW.GLFW_KEY_ENTER)){ shoot(); }
-		
-		switch(hudMode) {
-			case HUD_MODE_INFO: {
-				// if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_O))
-				// 	//fovParam = fovParam + 0.005f;
-				// else if(Keyboard.isKeyPressed(GLFW.GLFW_KEY_L))
-				// 	//fovParam = fovParam - 0.005f;
-				break;
 			}
 		}
 	}

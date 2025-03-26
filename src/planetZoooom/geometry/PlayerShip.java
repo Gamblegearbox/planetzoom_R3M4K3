@@ -1,18 +1,22 @@
 package planetZoooom.geometry;
 
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import planetZoooom.engine.MeshObject;
 import planetZoooom.engine.VertexArray;
 import planetZoooom.gameContent.Colors;
+import planetZoooom.input.Keyboard;
 
 public class PlayerShip extends MeshObject
 {	
 	private static final int VERTS = 5;
-	private static final float BULLET_SPEED = 3500f;
-	private static final float BULLET_RANGE = -2000f;
-
+	private static final float SPEED = 100.0f;
 
 	public PlayerShip() {		
 		position = new Vector3f(0.0f, 10.0f, 0.0f);
@@ -120,6 +124,19 @@ public class PlayerShip extends MeshObject
 	}
 	
 	public void update(float deltaTime) {
+
+		if(Keyboard.isKeyPressed(GLFW_KEY_LEFT))
+			position.x -= (SPEED * deltaTime);
+
+		if(Keyboard.isKeyPressed(GLFW_KEY_RIGHT))
+			position.x += (SPEED * deltaTime);
+
+		if(Keyboard.isKeyPressed(GLFW_KEY_UP))
+			position.y += (SPEED * deltaTime);
+		
+		if(Keyboard.isKeyPressed(GLFW_KEY_DOWN))
+			position.y -= (SPEED * deltaTime);
+
 		setPosition(position);
 	}
 
