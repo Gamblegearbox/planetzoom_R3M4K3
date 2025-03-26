@@ -1,6 +1,6 @@
 # JAVA
 *.class
-/build/
+build/
 
 #IDE
-/.vscode/
+.vscode/
